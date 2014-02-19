@@ -24,3 +24,4 @@ setup_repo() {
 
 setup_repo zsh-config
 setup_repo vim-config
+setup_repo home-bin
