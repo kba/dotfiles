@@ -197,7 +197,7 @@ s0_filter_match = any
 as_command0 = lxpanelctl menu
 as_command1 = lxpanelctl run
 as_command2 = gnome-screenshot -i
-as_command3 = 
+as_command3 = lxterminal
 as_command4 = 
 as_command5 = 
 as_command6 = 
@@ -209,7 +209,7 @@ as_command11 =
 as_run_command0_key = <Alt>F1
 as_run_command1_key = <Alt>F2
 as_run_command2_key = Print
-as_run_command3_key = Disabled
+as_run_command3_key = <Super>Return
 as_run_command4_key = Disabled
 as_run_command5_key = Disabled
 as_run_command6_key = Disabled
@@ -244,7 +244,7 @@ as_run_command10_edge =
 as_run_command11_edge = 
 
 [core]
-as_active_plugins = core;ccp;move;resize;place;decoration;annotate;commands;crashhandler;firepaint;imgjpeg;neg;png;put;regex;resizeinfo;splash;svg;switcher;text;video;vpswitch;wall;winrules;wobbly;ring;scale;
+as_active_plugins = core;ccp;move;resize;place;decoration;addhelper;annotate;commands;crashhandler;firepaint;imgjpeg;neg;png;put;regex;resizeinfo;splash;svg;switcher;text;video;vpswitch;wall;winrules;wobbly;ring;scale;
 as_audible_bell = true
 as_ignore_hints_when_maximized = true
 as_hide_skip_taskbar_windows = false
@@ -1257,7 +1257,7 @@ as_init_action = initiate_button
 
 [wall]
 as_show_switcher = true
-as_miniscreen = false
+as_miniscreen = true
 as_preview_timeout = 0.487400
 as_preview_scale = 315
 as_edge_radius = 5
@@ -1275,17 +1275,17 @@ as_arrow_shadow_color = #dcdcdcd9
 as_allow_wraparound = false
 as_slide_duration = 0.300000
 as_no_slide_match = type=Dock | type=Desktop | state=Sticky
-as_left_key = <Super>h
+as_left_key = Disabled
 as_left_button = Disabled
-as_right_key = <Super>l
+as_right_key = Disabled
 as_right_button = Disabled
 as_up_key = <Super>k
 as_up_button = Disabled
 as_down_key = <Super>j
 as_down_button = Disabled
-as_next_key = Disabled
+as_next_key = <Super>l
 as_next_button = Disabled
-as_prev_key = Disabled
+as_prev_key = <Super>h
 as_prev_button = Disabled
 as_left_window_key = <Shift><Super>h
 as_right_window_key = <Shift><Super>l
