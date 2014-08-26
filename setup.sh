@@ -1,6 +1,10 @@
 #!/bin/bash
 
+export SHBOOTRC_RUNNING=true
+
 dotfiledir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd $dotfiledir
+
 export OPT_INTERACTIVE
 
 export REPO_PREFIX="https://github.com/kba/"
@@ -23,7 +27,6 @@ DEFAULT_REPOS=(
     vim-config
     home-bin
 )
-cd $dotfiledir
 
 if [[ ! -e $repodir ]];then
     mkdir $repodir;
@@ -32,12 +35,13 @@ fi
 function ask_yes_no() {
     echo "$1 <yes/No>" >&2
     read yesno
-    if [[ "$yesno" == "yes" ]];then
+    if [[ "$yesno" == "yes" || "$yesno" == "y" ]];then
         echo "yes"
     fi
 }
 export -f ask_yes_no
 
+#{{{
 setup_repo() {
     repo=$1
     echo "set up $repo"
@@ -62,21 +66,26 @@ setup_repo() {
     fi
     cd $dotfiledir
 }
-
+#}}}
+#{{{
 function action_setup_repo() {
     local repolist=()
-    if [[ "${ACTION_ARGS[0]}" ]];then
-        repolist=$ACTION_ARGS
+    echo "****"
+    echo "${ACTION_ARGS[@]}"
+    echo "****"
+    if [[ -n "$ACTION_ARGS" ]];then
+        repolist=("${ACTION_ARGS[@]}")
     else
         repolist=("${DEFAULT_REPOS[@]}")
     fi
-    echo "Repos to load $repolist"
+    echo "Repos to load ${repolist[@]}"
     for repo in ${repolist[@]};do
-        echo $repo
+        # echo $repo
         setup_repo $repo
     done
 }
-
+#}}}
+#{{{
 function parse_commandline() {
     local args=$@
     # {{{
@@ -109,35 +118,38 @@ function parse_commandline() {
         if [[ -z "$1" ]];then
             GLOBAL_ACTION="$DEFAULT_ACTION"
         else
-            local valid_action=true
+            local is_valid_action=true
             case "$1" in
                 "sr"|"setup-repo")
                     GLOBAL_ACTION="setup-repo"
                     ;;
                 *)
                     GLOBAL_ACTION="$DEFAULT_ACTION"
-                    valid_action=false
+                    is_valid_action=
                     ;;
             esac
             ACTION_FUNC="action_$(echo $GLOBAL_ACTION|sed 's/[-]/_/g')"
-            if [[ $valid_action ]];then
+            if [[ $is_valid_action ]];then
                 shift
             fi
         fi
     # }}}
     # {{{
     # set up ACTION_ARGS
+    echo $@
     args=($@)
     ACTION_ARGS=("${args[@]}")
     #}}}
 }
-
+#}}}
+#{{{
 function debug() {
     echo "Action: $GLOBAL_ACTION"
     echo "Action Function: $ACTION_FUNC"
     echo "Global args: $GLOBAL_ARGS"
     echo "Action args: $ACTION_ARGS"
 }
+#}}}
 
 parse_commandline $@
 debug
