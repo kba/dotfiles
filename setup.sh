@@ -26,6 +26,7 @@ DEFAULT_REPOS=(
     zsh-config
     vim-config
     home-bin
+    tmux-config
 )
 
 if [[ ! -e $repodir ]];then
