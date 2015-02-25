@@ -1,6 +1,37 @@
 #!/bin/bash
 
+source <(curl -s "https://raw.githubusercontent.com/kba/shcolor/master/shcolor.sh")
+
 export SHBOOTRC_RUNNING=true
+
+echoe() {
+    echo -e $*
+}
+echoec() {
+    echo -ne $*
+    echo -ne `C`
+    echo
+}
+boxFat() {
+    color=$1
+    char=$2
+    message=$3
+    width=$(echo $(echo $message|wc -c) + 3|bc)
+    echo -ne $(C $color)
+    for i in $(seq $width);do
+        echo -ne $2
+    done
+    echo
+    echo -ne "`C $color`$char"
+    echo -n "`C` $message "
+    echo -e "`C $color`$char"
+    echo -ne $(C $color)
+    for i in $(seq $width);do
+        echo -ne $2
+    done
+    echo `C`
+}
+boxFat 2 '#' "Loremp ipsum dolor sit"
 
 dotfiledir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $dotfiledir
@@ -34,7 +65,7 @@ if [[ ! -e $repodir ]];then
 fi
 
 function ask_yes_no() {
-    echo "$1 <yes/No>" >&2
+    echo "`C 87 b`???`C` $1 <yes/No>" >&2
     read yesno
     if [[ "$yesno" == "yes" || "$yesno" == "y" ]];then
         echo "yes"
@@ -45,13 +76,21 @@ export -f ask_yes_no
 #{{{
 setup_repo() {
     repo=$1
-    echo "set up $repo"
+    echo "`C 2`>>>`C`"
+    echo "`C 2`>>>`C` Setting Up $repo"
+    echo "`C 2`>>>`C`"
     cd $repodir
     if [[ -e $repo ]];then
-        echo "Repository '$repo' already exists";
+        echo "$(C 1)!!$(C) Repository '$repo' already exists";
         if [[ $OPT_INTERACTIVE && $(ask_yes_no "Force Pull?") = "yes" ]];then
             cd $repo
             git pull
+            if [[ "$?" ]];then
+                echo "`C 1 b` Error on 'git pull' `C1`"
+                if [[ $OPT_INTERACTIVE && $(ask_yes_no "Open shell to resolve conflicts?") = "yes" ]];then
+                    $SHELL
+                fi
+            fi
         fi
         if [[ $OPT_INTERACTIVE && $(ask_yes_no "Force Setup?") = "yes" ]];then
             cd $repo
@@ -71,15 +110,14 @@ setup_repo() {
 #{{{
 function action_setup_repo() {
     local repolist=()
-    echo "****"
-    echo "${ACTION_ARGS[@]}"
-    echo "****"
     if [[ -n "$ACTION_ARGS" ]];then
         repolist=("${ACTION_ARGS[@]}")
     else
         repolist=("${DEFAULT_REPOS[@]}")
     fi
-    echo "Repos to load ${repolist[@]}"
+    echoec "`C 2`**********************************************************************"
+    echoec "Setting up: `C 3 b` ${repolist[@]}"
+    echoec "`C 2`**********************************************************************"
     for repo in ${repolist[@]};do
         # echo $repo
         setup_repo $repo
@@ -145,10 +183,12 @@ function parse_commandline() {
 #}}}
 #{{{
 function debug() {
-    echo "Action: $GLOBAL_ACTION"
+    echo -e "$(C 3)"
+    echo "Action: $(C 5 b)$GLOBAL_ACTION $(C 3)"
     echo "Action Function: $ACTION_FUNC"
     echo "Global args: $GLOBAL_ARGS"
     echo "Action args: $ACTION_ARGS"
+    echo -e "$(C)"
 }
 #}}}
 
