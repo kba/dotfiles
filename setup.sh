@@ -16,7 +16,7 @@ boxFat() {
     color=$1
     char=$2
     message=$3
-    width=$(echo $(echo $message|wc -c) + 3|bc)
+    width=$(echo $(echo -E $message|wc -c) + 3|bc)
     echo -ne $(C $color)
     for i in $(seq $width);do
         echo -ne $2
@@ -31,7 +31,12 @@ boxFat() {
     done
     echo `C`
 }
-boxFat 2 '#' "Loremp ipsum dolor sit"
+boxLeftChar() {
+    color=$1
+    chars=$2
+    message=$3
+    echo "`C $color`$chars`C` $message"
+}
 
 dotfiledir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $dotfiledir
@@ -65,7 +70,7 @@ if [[ ! -e $repodir ]];then
 fi
 
 function ask_yes_no() {
-    echo "`C 87 b`???`C` $1 <yes/No>" >&2
+    echo -n "`C 87 b`??`C` $1 <yes/`C 1`N`C`o> " >&2
     read yesno
     if [[ "$yesno" == "yes" || "$yesno" == "y" ]];then
         echo "yes"
@@ -76,17 +81,17 @@ export -f ask_yes_no
 #{{{
 setup_repo() {
     repo=$1
-    echo "`C 2`>>>`C`"
-    echo "`C 2`>>>`C` Setting Up $repo"
-    echo "`C 2`>>>`C`"
+    boxLeftChar 2 '>>>'
+    boxLeftChar 2 '>>>' "Setting up '$repo'"
+    boxLeftChar 2 '>>>'
     cd $repodir
     if [[ -e $repo ]];then
-        echo "$(C 1)!!$(C) Repository '$repo' already exists";
+        boxLeftChar 1 '!!' "Repository '$repo' already exists";
         if [[ $OPT_INTERACTIVE && $(ask_yes_no "Force Pull?") = "yes" ]];then
             cd $repo
             git pull
             if [[ "$?" ]];then
-                echo "`C 1 b` Error on 'git pull' `C1`"
+                boxLeftChar 1 '  !!' "Error on `C 2`git pull`C`"
                 if [[ $OPT_INTERACTIVE && $(ask_yes_no "Open shell to resolve conflicts?") = "yes" ]];then
                     $SHELL
                 fi
@@ -115,12 +120,30 @@ function action_setup_repo() {
     else
         repolist=("${DEFAULT_REPOS[@]}")
     fi
-    echoec "`C 2`**********************************************************************"
-    echoec "Setting up: `C 3 b` ${repolist[@]}"
-    echoec "`C 2`**********************************************************************"
+    boxFat 3 '#' "Setting up: `C 3 b` $(echo ${repolist[@]})"
     for repo in ${repolist[@]};do
         # echo $repo
         setup_repo $repo
+    done
+}
+#}}}
+#{{{
+function action_push_all() {
+    local repolist=()
+    if [[ -n "$ACTION_ARGS" ]];then
+        repolist=("${ACTION_ARGS[@]}")
+    else
+        repolist=("${DEFAULT_REPOS[@]}")
+    fi
+    boxFat 4 "#" "Pushing repos: $(echo ${repolist[@]})"
+    for repo in ${repolist[@]};do
+        cd repo/$repo
+        boxLeftChar 2 '>>>'
+        boxLeftChar 2 '>>>' "Pushing $repo"
+        boxLeftChar 2 '>>>'
+        git add -A .
+        git commit -v && git push
+        cd $dotfiledir
     done
 }
 #}}}
@@ -161,6 +184,9 @@ function parse_commandline() {
             case "$1" in
                 "sr"|"setup-repo")
                     GLOBAL_ACTION="setup-repo"
+                    ;;
+                "push"|"push-all")
+                    GLOBAL_ACTION="push-all"
                     ;;
                 *)
                     GLOBAL_ACTION="$DEFAULT_ACTION"
