@@ -71,7 +71,6 @@ export ACTION_FUNC
 
 repodir=$dotfiledir/repo
 DEFAULT_REPOS=(
-    antigen-config
     zsh-config
     vim-config
     home-bin
