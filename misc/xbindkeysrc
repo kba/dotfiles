@@ -59,5 +59,10 @@
     m:0x40 + c:26
     Mod4 + e 
 
+#Terminal
+"x-terminal-emulator"
+    m:0x40 + c:36
+    Mod4 + Return 
+
 #
 # End of xbindkeys configuration
