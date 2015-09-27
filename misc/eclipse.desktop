@@ -1,0 +1,8 @@
+[Desktop Entry]
+Comment=
+Terminal=false
+Name=eclipse
+Exec=/home/kb/bin/eclipse
+Categories=Development
+Type=Application
+Icon=/home/kb/build/eclipse/icon.xpm

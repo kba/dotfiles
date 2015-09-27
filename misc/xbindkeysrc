@@ -64,5 +64,15 @@
     m:0x40 + c:36
     Mod4 + Return 
 
+#Appfinder
+"xfce4-appfinder --disable-server"
+    m:0x8 + c:69
+    Alt + F3 
+
+#Appfinder
+"xfce4-appfinder --disable-server --collapsed"
+    m:0x8 + c:68
+    Alt + F2 
+
 #
 # End of xbindkeys configuration

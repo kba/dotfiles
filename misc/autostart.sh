@@ -9,4 +9,5 @@ conky -c $DIR/conky-right&
 xbindkeys&
 redshift&
 clipit&
+setxkbmap -option grp:alt_space_toggle us,de
 compiz --replace&
