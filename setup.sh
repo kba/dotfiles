@@ -35,6 +35,7 @@ boxFat() {
     echo
     _colorecho "$char" "$color"
     _colorecho " $message "
+    echo -ne $(C 0)
     _colorecho "$char" "$color"
     echo
     echo -ne $(C $color)
@@ -249,6 +250,6 @@ function debug() {
 #}}}
 
 parse_commandline $@
-# debug
+debug
 
 $ACTION_FUNC
