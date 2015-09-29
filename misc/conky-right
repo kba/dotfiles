@@ -120,13 +120,13 @@ ${color1}TEMP:${goto 120}$color${acpitemp}'C${goto 290}${color1}TRAFFIC:$alignr$
 
 $color${diskiograph sda1 50,0 000000 ffffff -l}
 $color1${fs_free /} / ${fs_size /} ${color 888}${fs_bar 10,200 /}${goto 380}${color1}DISK I/O$alignr$color ${diskio sda1}
-${cpugraph 50,0 008800 ff0000 0.8 -l -t}${color lightgrey}${font Monospace}
+${cpugraph 50,0 008800 00ff00 0.3 -l -t}${color lightgrey}${font Monospace}
 ${top name 1} (${top cpu 1}) $alignr${color1}CPU:$color $cpu% 
 ${top name 2} (${top cpu 2})
 ${top name 3} (${top cpu 3})
 ${top name 4} (${top cpu 4})
 ${top name 5} (${top cpu 5})
-${memgraph 50,0 008800 ff0000 1 -l -t}${color lightgrey}
+${memgraph 50,0 008800 ff0000 }${color lightgrey}
 ${top_mem name 1} (${top mem 1})$alignr${color1}MEM:$color $memperc% 
 ${top_mem name 2} (${top mem 2}) 
 ${top_mem name 3} (${top mem 3})

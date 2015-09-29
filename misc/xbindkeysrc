@@ -74,5 +74,10 @@
     m:0x8 + c:68
     Alt + F2 
 
+#Log Out
+"xfce4-session-logout"
+    m:0x40 + c:96
+    Mod4 + F12 
+
 #
 # End of xbindkeys configuration
