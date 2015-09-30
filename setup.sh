@@ -36,6 +36,7 @@ boxFat() {
     echo
     _colorecho "$char" "$color"
     _colorecho " $message "
+    echo -ne $(C 0)
     _colorecho "$char" "$color"
     echo
     echo -ne $(C $color)
@@ -72,7 +73,6 @@ export ACTION_FUNC
 
 repodir=$dotfiledir/repo
 DEFAULT_REPOS=(
-    antigen-config
     zsh-config
     vim-config
     home-bin
@@ -252,6 +252,6 @@ function debug() {
 #}}}
 
 parse_commandline $@
-# debug
+debug
 
 $ACTION_FUNC

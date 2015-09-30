@@ -1,0 +1,136 @@
+# conky configuration
+# edited by darcon@gmail.com
+# edited by unixprog@gmail.com
+
+# Minimum size of text area
+minimum_size 400 50
+
+# set to yes if you want Conky to be forked in the background
+background no
+
+# Use Xft?
+use_xft yes
+
+# Force UTF-&?
+override_utf8_locale yes
+color1 slate grey
+color2 44ff44
+color3 ff4444
+
+# Xft font when Xft is enabled
+#xftfont Bitstream Vera Sans Mono:size=8
+# xftfont Terminus:size=8
+xftfont Unifont :size=13
+
+# Text alpha when using Xft
+# xftalpha 0.8
+
+# Print everything to console?
+out_to_console no
+
+# mail spool
+#mail_spool $MAIL
+
+# Update interval in seconds
+update_interval 1
+
+# This is the number of times Conky will update before quitting.
+# Set to zero to run forever.
+total_run_times 0
+
+# Create own window instead of using desktop (required in nautilus)
+# possible types: override, dock, normal, desktop
+own_window yes
+own_window_type dock
+own_window_hints below,sticky
+
+# Text alignment, other possible values are commented
+# alignment top_left
+alignment top_right
+# alignment middle_right
+# alignment bottom_middle
+# alignment bottom_right
+
+# Gap between borders of screen and text
+# same thing as passing -x at command line
+gap_x 10
+gap_y 10
+
+
+# Use double buffering (reduces flicker, may not work for everyone)
+double_buffer yes
+
+# Draw shades?
+# draw_shades yes
+
+# Draw outlines?
+# draw_outline yes
+
+# Draw borders around text
+draw_borders yes
+
+# Stippled borders?
+stippled_borders 8
+
+# border margins
+# border_margin 10
+
+# border width
+border_width 0
+
+# Default colors and also border colors
+default_color aaaaaa
+default_shade_color black
+default_outline_color white 
+
+# Subtract file system buffers from used memory?
+no_buffers yes
+
+# set to yes if you want all text to be in uppercase
+uppercase no
+
+# use short unit names (GiB -> G)
+short_units yes
+
+# Width for $top name value (defaults to 15 characters). 
+top_name_width 30
+
+# number of cpu samples to average
+# set to 1 to disable averaging
+cpu_avg_samples 4
+
+# number of net samples to average
+# set to 1 to disable averaging
+net_avg_samples 5
+
+# Add spaces to keep things from moving about?  This only affects certain objects.
+use_spacer left
+
+# pad percent to this many digits
+pad_percents 3
+
+TEXT
+$alignc${color cc8822}${font M+1m :size=20}${time %e %B %G}$font
+${font M+1m :bold:size=30}$alignc${time %H:%M:%S}$font
+
+${color1}UPTIME${goto 120}$color$uptime${goto 290}${color1}LOAD:$alignr$color$loadavg
+${color1}BAT:${goto 115}$color$battery_percent% $acpiacadapter${goto 290}${color1}LOAD TIME:$alignr$color$battery_time
+${color1}IP INTERN:${goto 120}$color${addr wlan0}${goto 290}${color1}IP EXTERN$alignr$color${execi 3600 dig +short myip.opendns.com @resolver1.opendns.com}
+${color1}TEMP:${goto 120}$color${acpitemp}'C${goto 290}${color1}TRAFFIC:$alignr${color2}${totaldown wlan0} ${color3}${totalup wlan0}
+
+$color${diskiograph sda1 50,0 000000 ffffff -l}
+$color1${fs_free /} / ${fs_size /} ${color 888}${fs_bar 10,200 /}${goto 380}${color1}DISK I/O$alignr$color ${diskio sda1}
+${cpugraph 50,0 008800 00ff00 0.3 -l -t}${color lightgrey}${font Monospace}
+${top name 1} (${top cpu 1}) $alignr${color1}CPU:$color $cpu% 
+${top name 2} (${top cpu 2})
+${top name 3} (${top cpu 3})
+${top name 4} (${top cpu 4})
+${top name 5} (${top cpu 5})
+${memgraph 50,0 008800 ff0000 }${color lightgrey}
+${top_mem name 1} (${top mem 1})$alignr${color1}MEM:$color $memperc% 
+${top_mem name 2} (${top mem 2}) 
+${top_mem name 3} (${top mem 3})
+${top_mem name 4} (${top mem 4})
+${top_mem name 5} (${top mem 5})
+${downspeedgraph wlan0 50,410 002200 00ff00 -l -t} $alignr${color green}${downspeed wlan0}/s
+$color${upspeedgraph wlan0 50,410 220000 ff0000 -l -t} $alignr${color red}${upspeed wlan0}/s
