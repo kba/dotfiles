@@ -3,6 +3,7 @@
 source <(curl -s "https://raw.githubusercontent.com/kba/shcolor/master/shcolor.sh")
 
 export SHBOOTRC_RUNNING=true
+EDITOR=vim
 
 echoe() {
     echo -e $*
@@ -170,7 +171,8 @@ function action_push_all() {
         boxLeftChar 2 '>>>' "Pushing $repo"
         boxLeftChar 2 '>>>'
         git add -A .
-        git commit -v && git push
+        git commit -v 
+        git push
         cd $dotfiledir
     done
 }
