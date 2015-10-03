@@ -3,6 +3,7 @@
 source <(curl -s "https://raw.githubusercontent.com/kba/shcolor/master/shcolor.sh")
 
 export SHBOOTRC_RUNNING=true
+EDITOR=vim
 
 _textWidthWithoutEscapeCodes() {
     local message=$(echo $1|sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")
@@ -170,7 +171,8 @@ function action_push_all() {
         boxLeftChar 2 '>>>' "Pushing $repo"
         boxLeftChar 2 '>>>'
         git add -A .
-        git commit -v && git push
+        git commit -v 
+        git push
         cd $dotfiledir
     done
 }
