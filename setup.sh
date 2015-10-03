@@ -58,19 +58,18 @@ export REPO_PREFIX="https://github.com/kba/"
 export REPO_SUFFIX=".git"
 
 # The global action
-export DEFAULT_ACTION="setup-repo"
-export GLOBAL_ACTION
+export GLOBAL_ACTION="usage"
 
 # The 
 export ORIG_ARGS
 export GLOBAL_ARGS=()
-export ACTION_ARGS=()
 export ACTION_FUNC
 
-BACKUP_LIST=".backup.list"
+BACKUP_LIST="$dotfiledir/.backup.list"
 [[ ! -e $BACKUP_LIST ]] && touch $BACKUP_LIST;
 
 repodir=$dotfiledir/repo
+LIST_OF_REPOS=()
 DEFAULT_REPOS=(
     zsh-config
     vim-config
@@ -82,6 +81,7 @@ if [[ ! -e $repodir ]];then
     mkdir $repodir;
 fi
 
+#{{{
 ask_yes_no() {
     default_to_yes=$2
     if [[ ! -z $default_to_yes && "$default_to_yes" == "yes" ]];then
@@ -99,7 +99,7 @@ ask_yes_no() {
     fi
 }
 export -f ask_yes_no
-
+#}}}
 #{{{
 setup_repo() {
     repo=$1
@@ -131,7 +131,7 @@ setup_repo() {
                 for dotfile in $(find .home -mindepth 1 -name '.*' -exec basename {} \;);do
                     echo mv $HOME/$dotfile $HOME/$dotfile.$now
                     mv $HOME/$dotfile $HOME/$dotfile.$now
-                    echo $HOME/$dotfile.$now >> $BACKUP_LIST
+                    echo "$HOME/$dotfile.$now" >> $BACKUP_LIST
                     echo ln -s $(readlink -f .home/$dotfile) $HOME/$dotfile
                     ln -s $(readlink -f .home/$dotfile) $HOME/$dotfile
                 done
@@ -149,48 +149,76 @@ setup_repo() {
     cd $dotfiledir
 }
 #}}}
+
+#{{{ 
+function action_remove_backups() {
+while read $backup;do
+    [[ -e $backup && -L $backup ]] && rm -v $backup
+done < $BACKUP_LIST
+}
+#}}}
+#{{{
+function debug() {
+    echo -e "$(C 3)"
+    echo "Action: $(C 5 b)$GLOBAL_ACTION $(C 3)"
+    echo "Action Function: $ACTION_FUNC"
+    echo "Global args: $GLOBAL_ARGS"
+    echo "OPT_FORCE_SETUP: $OPT_FORCE_SETUP"
+    echo "Action args: $ACTION_ARGS"
+    echo -e "$(C)"
+}
+#}}}
+#{{{ 
+function action_usage() {
+echo "$(C 10)$0 $(C 9) [-if] [--force-setup] <action> <repo>"
+echo
+echo "  $(C 3)Repos:$(C) [Default: all of them]"
+for repo in ${LIST_OF_REPOS[@]};do
+echo -e "    $(C 12)$repo$(C)\t$REPO_PREFIX$repo$REPO_SUFFIX"
+done;
+echo
+echo "  $(C 3)Options:$(C 9)"
+echo "    $(C 12)-i --interactive$(C 9) interactive"
+echo "    $(C 12)-y --noask$(C 9)       assume defaults (i.e. don't ask)"
+echo "    $(C 12)--force-setup$(C 9)    Setup symlinks for the repo no matter what"
+echo
+echo "  $(C 3)Actions:$(C 9)"
+echo
+echo "    $(C 12)help$(C 9)             This help screen "
+echo "    $(C 12)remove-backups$(C 9)   Remove all timestamped backups"
+echo "    $(C 12)setup-repo$(C 9)       Setup repositories"
+echo "    $(C 12)push-all$(C 9)         Push all changes"
+echo
+debug
+exit
+}
+#}}}
 #{{{
 function action_setup_repo() {
-    local repolist=()
-    if [[ -n "$ACTION_ARGS" ]];then
-        repolist=("${ACTION_ARGS[@]}")
-    else
-        repolist=("${DEFAULT_REPOS[@]}")
-    fi
-    boxFat 4 '#' "Setting up: `C 3 b` $(echo ${repolist[@]})"
-    for repo in ${repolist[@]};do
+    boxFat 4 '#' "Setting up: `C 3 b` $(echo ${LIST_OF_REPOS[@]})"
+    for repo in ${LIST_OF_REPOS[@]};do
         setup_repo $repo
     done
 }
 #}}}
 #{{{
 function action_push_all() {
-    local repolist=()
-    if [[ -n "$ACTION_ARGS" ]];then
-        repolist=("${ACTION_ARGS[@]}")
-    else
-        repolist=("${DEFAULT_REPOS[@]}")
-    fi
-    boxFat 4 "#" "Pushing repos: $(echo ${repolist[@]})"
-    for repo in ${repolist[@]};do
+    boxFat 4 "#" "Pushing repos: $(echo ${LIST_OF_REPOS[@]})"
+    for repo in ${LIST_OF_REPOS[@]};do
         cd repo/$repo
         boxLeftChar 2 '>>>'
         boxLeftChar 2 '>>>' "Pushing $repo"
         boxLeftChar 2 '>>>'
         git add -A .
-        git commit -v && git push
+        git commit -v
+        git push
         cd $dotfiledir
     done
 }
 #}}}
 #{{{
 function parse_commandline() {
-    local args=$@
     # {{{
-    # remember ORIG_ARGS
-    ORIG_ARGS=("${args[@]}")
-    readonly ORIG_ARGS
-    #}}}
     # {{{
     # set up GLOBAL_ARGS 
     while (( "$#" ));do
@@ -208,84 +236,50 @@ function parse_commandline() {
                         ;;
                 esac
                 GLOBAL_ARGS+=$1
+                shift
                 ;;
-                # TODO GLOBAL_ACTION
-                *)
-                break
-                ;;
+            # TODO GLOBAL_ACTION
+            *)
+            break
+            ;;
         esac
-        shift
     done
     debug
     # }}}
     # {{{
     # set up $GLOBAL_ACTION
-        if [[ -z "$1" ]];then
-            usage
-        else
-            local is_valid_action=true
-            case "$1" in
-                "setup-repo")
-                    GLOBAL_ACTION="setup-repo"
-                    ;;
-                "help"|"usage")
-                    usage
-                    ;;
-                "push-all")
-                    GLOBAL_ACTION="push-all"
-                    ;;
-                *)
-                    usage;
-                    ;;
-            esac
-            ACTION_FUNC="action_$(echo $GLOBAL_ACTION|sed 's/[-]/_/g')"
-            if [[ $is_valid_action ]];then
-                shift
-            fi
-        fi
+    if [[ ! -z "$1" ]];then
+        case "$1" in
+            "setup-repo")
+                GLOBAL_ACTION="setup-repo"
+                ;;
+            "help"|"usage")
+                GLOBAL_ACTION="usage"
+                ;;
+            "push-all")
+                GLOBAL_ACTION="push-all"
+                ;;
+            *)
+                GLOBAL_ACTION="usage"
+                ;;
+        esac
+    fi
+    ACTION_FUNC="action_$(echo $GLOBAL_ACTION|sed 's/[-]/_/g')"
+    shift
     # }}}
     # {{{
-    # set up ACTION_ARGS
-    echo $@
-    args=($@)
-    ACTION_ARGS=("${args[@]}")
+    # set up LIST_OF_REPOS
+    if [[ $@ == "" ]];then
+        LIST_OF_REPOS=("${DEFAULT_REPOS[@]}")
+    else
+        args=($@)
+        LIST_OF_REPOS=("${args[@]}")
+    fi
+    # echo "${LIST_OF_REPOS[@]}"
     #}}}
 }
 #}}}
-#{{{
-function debug() {
-    echo -e "$(C 3)"
-    echo "Action: $(C 5 b)$GLOBAL_ACTION $(C 3)"
-    echo "Action Function: $ACTION_FUNC"
-    echo "Global args: $GLOBAL_ARGS"
-    echo "OPT_FORCE_SETUP: $OPT_FORCE_SETUP"
-    echo "Action args: $ACTION_ARGS"
-    echo -e "$(C)"
-}
-#}}}
 
-function usage() {
-echo "$(C 10)$0 $(C 9) [-if] [--force-setup] <action> <repo>"
-echo "  $(C 3)Repos:$(C) [Default: all of them]"
-for repo in ${repolist[@]};do
-echo "    $(C 12)$repo$(C)\t$REPO_PREFIX$repo$REPO_SUFFIX"
-done;
-echo
-echo
-echo "  $(C 3)Options:$(C 9)"
-echo "    $(C 12)-i --interactive$(C 9) interactive"
-echo "    $(C 12)-y --noask$(C 9)       assume defaults (i.e. don't ask)"
-echo "    $(C 12)--force-setup$(C 9)    Setup symlinks for the repo no matter what"
-echo
-echo "  $(C 3)Actions:$(C 9)"
-echo
-echo "    $(C 12)help$(C 9)          This"
-echo "    $(C 12)setup-repo$(C 9)    Setup repositories"
-echo "    $(C 12)push-all$(C 9)      Push all changes"
-echo
-debug
-exit
-}
 
 parse_commandline $@
 
