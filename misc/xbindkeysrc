@@ -79,5 +79,20 @@
     m:0x40 + c:96
     Mod4 + F12 
 
+#Raise Volume
+"pulseaudio-ctl up"
+    m:0x0 + c:123
+    XF86AudioRaiseVolume 
+
+#Volume down
+"pulseaudio-ctl down"
+    m:0x0 + c:122
+    XF86AudioLowerVolume 
+
+#Mute Volume
+"pulseaudio-ctl mute"
+    m:0x0 + c:121
+    XF86AudioMute 
+
 #
 # End of xbindkeys configuration

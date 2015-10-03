@@ -41,7 +41,7 @@ total_run_times 0
 # Create own window instead of using desktop (required in nautilus)
 # possible types: override, dock, normal, desktop
 own_window yes
-own_window_type dock
+own_window_type override
 own_window_hints below,sticky
 
 # Text alignment, other possible values are commented
@@ -54,7 +54,7 @@ alignment top_right
 # Gap between borders of screen and text
 # same thing as passing -x at command line
 gap_x 10
-gap_y 10
+gap_y 100
 
 
 # Use double buffering (reduces flicker, may not work for everyone)
@@ -120,7 +120,7 @@ ${color1}TEMP:${goto 120}$color${acpitemp}'C${goto 290}${color1}TRAFFIC:$alignr$
 
 $color${diskiograph sda1 50,0 000000 ffffff -l}
 $color1${fs_free /} / ${fs_size /} ${color 888}${fs_bar 10,200 /}${goto 380}${color1}DISK I/O$alignr$color ${diskio sda1}
-${cpugraph 50,0 008800 00ff00 0.3 -l -t}${color lightgrey}${font Monospace}
+${cpugraph 50,0 008800 00ff00 l -t}${color lightgrey}${font Monospace}
 ${top name 1} (${top cpu 1}) $alignr${color1}CPU:$color $cpu% 
 ${top name 2} (${top cpu 2})
 ${top name 3} (${top cpu 3})
