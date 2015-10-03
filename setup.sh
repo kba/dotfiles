@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source <(curl -s "https://raw.githubusercontent.com/kba/shcolor/master/shcolor.sh")
+source ~/.shcolor.sh 2>/dev/null || source <(curl -s https://raw.githubusercontent.com/kba/shcolor/master/shcolor.sh|tee ~/.shcolor.sh)
 
 export SHBOOTRC_RUNNING=true
 EDITOR=vim
@@ -50,6 +50,7 @@ boxLeftChar() {
 dotfiledir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $dotfiledir
 
+export OPT_DEBUG=false
 export OPT_INTERACTIVE=false
 export OPT_ASSUME_DEFAULT=false
 export OPT_FORCE_SETUP=false
@@ -129,10 +130,9 @@ setup_repo() {
             now=$(date +%s%N)
             if [ -e .home ];then
                 for dotfile in $(find .home -mindepth 1 -name '.*' -exec basename {} \;);do
-                    echo mv $HOME/$dotfile $HOME/$dotfile.$now
+                    echo "`C 3`BACKUP`C` `C 1`~/$dotfile`C` -> ~/$dotfile.$now"
                     mv $HOME/$dotfile $HOME/$dotfile.$now
-                    echo "$HOME/$dotfile.$now" >> $BACKUP_LIST
-                    echo ln -s $(readlink -f .home/$dotfile) $HOME/$dotfile
+                    echo "`C 2`SYMLINK`C` $repo/.home/$dotfile) -> `C 2`~/$dotfile`C`"
                     ln -s $(readlink -f .home/$dotfile) $HOME/$dotfile
                 done
             else
@@ -150,46 +150,41 @@ setup_repo() {
 }
 #}}}
 
-#{{{ 
-function action_remove_backups() {
-while read $backup;do
-    [[ -e $backup && -L $backup ]] && rm -v $backup
-done < $BACKUP_LIST
-}
-#}}}
 #{{{
 function debug() {
-    echo -e "$(C 3)"
-    echo "Action: $(C 5 b)$GLOBAL_ACTION $(C 3)"
-    echo "Action Function: $ACTION_FUNC"
-    echo "Global args: $GLOBAL_ARGS"
-    echo "OPT_FORCE_SETUP: $OPT_FORCE_SETUP"
-    echo "Action args: $ACTION_ARGS"
-    echo -e "$(C)"
+    boxLeftChar 14 'DEBUG>' "Action: $(C 5 b)$GLOBAL_ACTION $(C 3)"
+    boxLeftChar 14 'DEBUG>' "Action Function: $ACTION_FUNC"
+    boxLeftChar 14 'DEBUG>' "Global args: $GLOBAL_ARGS"
+    boxLeftChar 14 'DEBUG>' "  OPT_FORCE_SETUP=$OPT_FORCE_SETUP"
+    boxLeftChar 14 'DEBUG>' "  OPT_INTERACTIVE=$OPT_INTERACTIVE"
+    boxLeftChar 14 'DEBUG>' "  OPT_ASSUME_DEFAULT=$OPT_ASSUME_DEFAULT"
+    boxLeftChar 14 'DEBUG>' "Repos: $(echo ${LIST_OF_REPOS[@]})"
 }
 #}}}
+
+# Actions
 #{{{ 
 function action_usage() {
-echo "$(C 10)$0 $(C 9) [-if] [--force-setup] <action> <repo>"
+echo "`C 10`$0 `C` [-iyf] [--force-setup] <action> <repo>"
 echo
-echo "  $(C 3)Repos:$(C) [Default: all of them]"
+echo "  `C 3`Repos:`C` [Default: all of them]"
 for repo in ${LIST_OF_REPOS[@]};do
-echo -e "    $(C 12)$repo$(C)\t$REPO_PREFIX$repo$REPO_SUFFIX"
+echo -e "    `C 12`$repo`C`\t     $REPO_PREFIX$repo$REPO_SUFFIX"
 done;
 echo
-echo "  $(C 3)Options:$(C 9)"
-echo "    $(C 12)-i --interactive$(C 9) interactive"
-echo "    $(C 12)-y --noask$(C 9)       assume defaults (i.e. don't ask)"
-echo "    $(C 12)--force-setup$(C 9)    Setup symlinks for the repo no matter what"
+echo "  `C 3`Options:`C`"
+echo "    `C 12`-i --interactive`C` interactive"
+echo "    `C 12`-y --noask`C`       assume defaults (i.e. don't ask)"
+echo "    `C 12`-f --force-setup`C` Setup symlinks for the repo no matter what"
 echo
-echo "  $(C 3)Actions:$(C 9)"
+echo "  `C 3`Actions:`C`"
+echo "    `C 12`help`C`             This help screen "
+echo "    `C 12`list-backups`C`     Remove all timestamped backups"
+echo "    `C 12`rm-backups`C`       Remove all timestamped backups"
+echo "    `C 12`setup-repo`C`       Setup repositories"
+echo "    `C 12`push-all`C`         Push all changes"
 echo
-echo "    $(C 12)help$(C 9)             This help screen "
-echo "    $(C 12)remove-backups$(C 9)   Remove all timestamped backups"
-echo "    $(C 12)setup-repo$(C 9)       Setup repositories"
-echo "    $(C 12)push-all$(C 9)         Push all changes"
-echo
-debug
+[[ $OPT_DEBUG == true ]] && debug
 exit
 }
 #}}}
@@ -216,9 +211,35 @@ function action_push_all() {
     done
 }
 #}}}
+#{{{ 
+function action_remove_backups() {
+    while read backup;do
+        if [[ -e $backup && -L $backup ]];then
+            echo "`C 1 b`DELETE`C` $backup"
+            if [[ $OPT_ASSUME_DEFAULT == true \
+                || $OPT_INTERACTIVE == true && $(ask_yes_no "Remove backup?" "yes") = "yes" ]];then
+                rm -v $backup >/dev/null
+            fi
+        fi
+    done < $BACKUP_LIST
+    echo "" > $BACKUP_LIST
+}
+#}}}
+#{{{ 
+function action_list_backups() {
+    while read backup;do
+        if [[ -e $backup && -L $backup ]];then
+            echo "`C 2 b`BACKUP:`C` $backup"
+        else
+            echo "`C 3 b`BACKUP (nonexistant):`C` $backup"
+        fi
+    done < $BACKUP_LIST
+}
+#}}}
+
+# Parse Command line arguments
 #{{{
 function parse_commandline() {
-    # {{{
     # {{{
     # set up GLOBAL_ARGS 
     while (( "$#" ));do
@@ -228,11 +249,14 @@ function parse_commandline() {
                     "-i"|"--interactive")
                         OPT_INTERACTIVE=true
                         ;;
-                    "--force-setup")
+                    "-f"|"--force-setup")
                         OPT_FORCE_SETUP=true
                         ;;
-                    "-f"|"--noask")
+                    "-y"|"--noask")
                         OPT_ASSUME_DEFAULT=true
+                        ;;
+                    "-d"|"--debug")
+                        OPT_DEBUG=true
                         ;;
                 esac
                 GLOBAL_ARGS+=$1
@@ -244,7 +268,6 @@ function parse_commandline() {
             ;;
         esac
     done
-    debug
     # }}}
     # {{{
     # set up $GLOBAL_ACTION
@@ -256,8 +279,14 @@ function parse_commandline() {
             "help"|"usage")
                 GLOBAL_ACTION="usage"
                 ;;
-            "push-all")
+            "push"|"push-all")
                 GLOBAL_ACTION="push-all"
+                ;;
+            "list-backups")
+                GLOBAL_ACTION="list-backups"
+                ;;
+            "rm-backups"|"remove-backups")
+                GLOBAL_ACTION="remove-backups"
                 ;;
             *)
                 GLOBAL_ACTION="usage"
@@ -280,7 +309,7 @@ function parse_commandline() {
 }
 #}}}
 
-
+# main
 parse_commandline $@
 
 $ACTION_FUNC
