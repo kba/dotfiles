@@ -5,6 +5,8 @@ source <(curl -s "https://raw.githubusercontent.com/kba/shcolor/master/shcolor.s
 export SHBOOTRC_RUNNING=true
 EDITOR=vim
 
+#{{{ 
+# Utility functions for drawing stuff
 _textWidthWithoutEscapeCodes() {
     local message=$(echo $1|sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")
     local padding=3
@@ -43,6 +45,7 @@ boxLeftChar() {
     message=$3
     echo "`C $color`$chars`C` $message"
 }
+#}}}
 
 dotfiledir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $dotfiledir
@@ -63,6 +66,9 @@ export ORIG_ARGS
 export GLOBAL_ARGS=()
 export ACTION_ARGS=()
 export ACTION_FUNC
+
+BACKUP_LIST=".backup.list"
+[[ ! -e $BACKUP_LIST ]] && touch $BACKUP_LIST;
 
 repodir=$dotfiledir/repo
 DEFAULT_REPOS=(
@@ -125,6 +131,7 @@ setup_repo() {
                 for dotfile in $(find .home -mindepth 1 -name '.*' -exec basename {} \;);do
                     echo mv $HOME/$dotfile $HOME/$dotfile.$now
                     mv $HOME/$dotfile $HOME/$dotfile.$now
+                    echo $HOME/$dotfile.$now >> $BACKUP_LIST
                     echo ln -s $(readlink -f .home/$dotfile) $HOME/$dotfile
                     ln -s $(readlink -f .home/$dotfile) $HOME/$dotfile
                 done
@@ -171,8 +178,7 @@ function action_push_all() {
         boxLeftChar 2 '>>>' "Pushing $repo"
         boxLeftChar 2 '>>>'
         git add -A .
-        git commit -v 
-        git push
+        git commit -v && git push
         cd $dotfiledir
     done
 }
@@ -260,6 +266,11 @@ function debug() {
 
 function usage() {
 echo "$(C 10)$0 $(C 9) [-if] [--force-setup] <action> <repo>"
+echo "  $(C 3)Repos:$(C) [Default: all of them]"
+for repo in ${repolist[@]};do
+echo "    $(C 12)$repo$(C)\t$REPO_PREFIX$repo$REPO_SUFFIX"
+done;
+echo
 echo
 echo "  $(C 3)Options:$(C 9)"
 echo "    $(C 12)-i --interactive$(C 9) interactive"
