@@ -4,14 +4,6 @@ source <(curl -s "https://raw.githubusercontent.com/kba/shcolor/master/shcolor.s
 
 export SHBOOTRC_RUNNING=true
 
-echoe() {
-    echo -e $*
-}
-echoec() {
-    echo -ne $*
-    echo -ne `C`
-    echo
-}
 _textWidthWithoutEscapeCodes() {
     local message=$(echo $1|sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")
     local padding=3
@@ -54,8 +46,9 @@ boxLeftChar() {
 dotfiledir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $dotfiledir
 
-export OPT_INTERACTIVE
-export OPT_ASSUME_DEFAULT
+export OPT_INTERACTIVE=false
+export OPT_ASSUME_DEFAULT=false
+export OPT_FORCE_SETUP=false
 
 export REPO_PREFIX="https://github.com/kba/"
 export REPO_SUFFIX=".git"
@@ -110,32 +103,40 @@ setup_repo() {
     if [[ -e $repo ]];then
         boxLeftChar 1 '!!' "Repository '$repo' already exists";
         should_pull=false
-        if [[ "$OPT_ASSUME_DEFAULT" == 1 ]];then
+        if [[ $OPT_ASSUME_DEFAULT == true ]];then
             should_pull=true
-        elif [[ $OPT_INTERACTIVE && $(ask_yes_no "Force Pull?" "yes") = "yes" ]];then
+        elif [[ $OPT_INTERACTIVE == true && $(ask_yes_no "Force Pull?" "yes") = "yes" ]];then
             should_pull=true
         fi
-        if [[ $should_pull ]];then
-            cd $repo
+        cd $repo
+        if [[ $should_pull == true ]];then
             git pull
             if [[ "$?" -gt 0 ]];then
                 boxLeftChar 1 '  !!' "Error on `C 2`git pull`C`"
-                if [[ $OPT_INTERACTIVE && $(ask_yes_no "Open shell to resolve conflicts?") = "yes" ]];then
+                if [[ $OPT_INTERACTIVE == true && $(ask_yes_no "Open shell to resolve conflicts?") = "yes" ]];then
                     $SHELL
                 fi
             fi
         fi
-        if [[ $OPT_INTERACTIVE && $(ask_yes_no "Force Setup?" "no") = "yes" ]];then
-            cd $repo
-            source setup.sh
+        if [[ $OPT_FORCE_SETUP = true || ($OPT_INTERACTIVE == true && $(ask_yes_no "Force Setup?" "no") == "yes") ]];then
+            now=$(date +%s%N)
+            if [ -e .home ];then
+                for dotfile in $(find .home -mindepth 1 -name '.*' -exec basename {} \;);do
+                    echo mv $HOME/$dotfile $HOME/$dotfile.$now
+                    mv $HOME/$dotfile $HOME/$dotfile.$now
+                    echo ln -s $(readlink -f .home/$dotfile) $HOME/$dotfile
+                    ln -s $(readlink -f .home/$dotfile) $HOME/$dotfile
+                done
+            else
+                echo "$(C 10)WARNING: No .home for $repo"
+            fi
+            if [ -e setup.sh ];then
+                source setup.sh
+            fi
         fi
     else
         git clone "$REPO_PREFIX${repo}$REPO_SUFFIX"
-
-        ## XXX
-        # NESTED
-        cd $repo
-        source setup.sh
+        setup_repo $repo
     fi
     cd $dotfiledir
 }
@@ -150,7 +151,6 @@ function action_setup_repo() {
     fi
     boxFat 4 '#' "Setting up: `C 3 b` $(echo ${repolist[@]})"
     for repo in ${repolist[@]};do
-        # echo $repo
         setup_repo $repo
     done
 }
@@ -189,10 +189,13 @@ function parse_commandline() {
         case "$1" in
             -*)
                 case "$1" in
-                    "-i")
+                    "-i"|"--interactive")
                         OPT_INTERACTIVE=true
                         ;;
-                    "-f")
+                    "--force-setup")
+                        OPT_FORCE_SETUP=true
+                        ;;
+                    "-f"|"--noask")
                         OPT_ASSUME_DEFAULT=true
                         ;;
                 esac
@@ -205,23 +208,26 @@ function parse_commandline() {
         esac
         shift
     done
+    debug
     # }}}
     # {{{
     # set up $GLOBAL_ACTION
         if [[ -z "$1" ]];then
-            GLOBAL_ACTION="$DEFAULT_ACTION"
+            usage
         else
             local is_valid_action=true
             case "$1" in
-                "sr"|"setup-repo")
+                "setup-repo")
                     GLOBAL_ACTION="setup-repo"
                     ;;
-                "push"|"push-all")
+                "help"|"usage")
+                    usage
+                    ;;
+                "push-all")
                     GLOBAL_ACTION="push-all"
                     ;;
                 *)
-                    GLOBAL_ACTION="$DEFAULT_ACTION"
-                    is_valid_action=
+                    usage;
                     ;;
             esac
             ACTION_FUNC="action_$(echo $GLOBAL_ACTION|sed 's/[-]/_/g')"
@@ -244,12 +250,30 @@ function debug() {
     echo "Action: $(C 5 b)$GLOBAL_ACTION $(C 3)"
     echo "Action Function: $ACTION_FUNC"
     echo "Global args: $GLOBAL_ARGS"
+    echo "OPT_FORCE_SETUP: $OPT_FORCE_SETUP"
     echo "Action args: $ACTION_ARGS"
     echo -e "$(C)"
 }
 #}}}
 
-parse_commandline $@
+function usage() {
+echo "$(C 10)$0 $(C 9) [-if] [--force-setup] <action> <repo>"
+echo
+echo "  $(C 3)Options:$(C 9)"
+echo "    $(C 12)-i --interactive$(C 9) interactive"
+echo "    $(C 12)-y --noask$(C 9)       assume defaults (i.e. don't ask)"
+echo "    $(C 12)--force-setup$(C 9)    Setup symlinks for the repo no matter what"
+echo
+echo "  $(C 3)Actions:$(C 9)"
+echo
+echo "    $(C 12)help$(C 9)          This"
+echo "    $(C 12)setup-repo$(C 9)    Setup repositories"
+echo "    $(C 12)push-all$(C 9)      Push all changes"
+echo
 debug
+exit
+}
+
+parse_commandline $@
 
 $ACTION_FUNC
