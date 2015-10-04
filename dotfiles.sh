@@ -210,7 +210,7 @@ function action_push_all() {
         boxLeftChar 2 '>>>'
         boxLeftChar 2 '>>>' "pushing $repo"
         boxLeftChar 2 '>>>'
-        git add -a .
+        git add .
         git commit -v
         git push
         cd $dotfiledir
