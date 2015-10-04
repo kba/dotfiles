@@ -2,9 +2,6 @@
 
 source ~/.shcolor.sh 2>/dev/null || source <(curl -s https://raw.githubusercontent.com/kba/shcolor/master/shcolor.sh|tee ~/.shcolor.sh)
 
-export SHBOOTRC_RUNNING=true
-EDITOR=vim
-
 #{{{ 
 # Utility functions for drawing stuff
 _textWidthWithoutEscapeCodes() {
@@ -66,17 +63,16 @@ export ORIG_ARGS
 export GLOBAL_ARGS=()
 export ACTION_FUNC
 
-BACKUP_LIST="$dotfiledir/.backup.list"
-[[ ! -e $BACKUP_LIST ]] && touch $BACKUP_LIST;
+# now=$(date +%s%N)
+now=$(date +"%Y-%m-%dT%H:%M:%SZ")
+
+BACKUP_DIR="$dotfiledir/.backup"
+[[ ! -e $BACKUP_DIR ]] && mkdir $BACKUP_DIR;
 
 repodir=$dotfiledir/repo
 LIST_OF_REPOS=()
-DEFAULT_REPOS=(
-    zsh-config
-    vim-config
-    home-bin
-    tmux-config
-)
+mapfile -t DEFAULT_REPOS < <(cat REPOLIST |grep -v '^\s*#')
+
 
 if [[ ! -e $repodir ]];then
     mkdir $repodir;
@@ -111,11 +107,10 @@ setup_repo() {
     if [[ -e $repo ]];then
         boxLeftChar 1 '!!' "Repository '$repo' already exists";
         should_pull=false
-        if [[ $OPT_ASSUME_DEFAULT == true ]];then
-            should_pull=true
-        elif [[ $OPT_INTERACTIVE == true && $(ask_yes_no "Force Pull?" "yes") = "yes" ]];then
+        if [[ $OPT_ASSUME_DEFAULT == true || ($OPT_INTERACTIVE == true && $(ask_yes_no "Force Pull?" "yes") = "yes")]];then
             should_pull=true
         fi
+        #XXX
         cd $repo
         if [[ $should_pull == true ]];then
             git pull
@@ -127,19 +122,28 @@ setup_repo() {
             fi
         fi
         if [[ $OPT_FORCE_SETUP = true || ($OPT_INTERACTIVE == true && $(ask_yes_no "Force Setup?" "no") == "yes") ]];then
-            now=$(date +%s%N)
-            if [ -e .home ];then
-                for dotfile in $(find .home -mindepth 1 -name '.*' -exec basename {} \;);do
-                    echo "`C 3`BACKUP`C` `C 1`~/$dotfile`C` -> ~/$dotfile.$now"
-                    mv $HOME/$dotfile $HOME/$dotfile.$now
-                    echo "`C 2`SYMLINK`C` $repo/.home/$dotfile) -> `C 2`~/$dotfile`C`"
-                    ln -s $(readlink -f .home/$dotfile) $HOME/$dotfile
-                done
-            else
-                echo "$(C 10)WARNING: No .home for $repo"
-            fi
-            if [ -e setup.sh ];then
-                source setup.sh
+            for confdir in ".HOME" ".XDG_CONFIG_HOME";do
+                targetdir=~
+                if [[ $confdir == ".XDG_CONFIG_HOME" ]];then
+                    targetdir=~/.config
+                fi
+                backup_tstamp="$BACKUP_DIR/$now/$confdir"
+                # echo $backup_tstamp
+                if [ -e $confdir ];then
+                    for dotfile in $(find $confdir -mindepth 1 -name '*' -exec basename {} \;);do
+                        backup="$backup_tstamp/$dotfile"
+                        mkdir -p $backup_tstamp
+                        echo "`C 3`BACKUP`C` `C 1`$targetdir/$dotfile`C` -> $backup"
+                        mv -v "$targetdir/$dotfile" "$backup"
+                        echo "`C 2`SYMLINK`C` $repo/$confdir/$dotfile -> `C 2`$targetdir/$dotfile`C`"
+                        ln -s "$(readlink -f $confdir/$dotfile)" "$targetdir/$dotfile"
+                    done
+                else
+                    echo "$(C 13)WARNING: No $confdir for $repo`C`"
+                fi
+            done
+            if [ -e init.sh ];then
+                source init.sh
             fi
         fi
     else
@@ -181,16 +185,18 @@ echo "  `C 3`Actions:`C`"
 echo "    `C 12`help`C`             This help screen "
 echo "    `C 12`list-backups`C`     Remove all timestamped backups"
 echo "    `C 12`rm-backups`C`       Remove all timestamped backups"
-echo "    `C 12`setup-repo`C`       Setup repositories"
+echo "    `C 12`setup`C`            Setup repositories"
+echo "    `C 12`pull-all`C`         Pull all changes"
 echo "    `C 12`push-all`C`         Push all changes"
+echo "    `C 12`status`C`           Push all changes"
 echo
 [[ $OPT_DEBUG == true ]] && debug
 exit
 }
 #}}}
-#{{{
-function action_setup_repo() {
-    boxFat 4 '#' "Setting up: `C 3 b` $(echo ${LIST_OF_REPOS[@]})"
+#{{{PushPush
+function action_setup() {
+    boxFat 4 '#' "Setting up: `C 3 b` $(echo ${LIST_OF_REPOS[@]})`C`"
     for repo in ${LIST_OF_REPOS[@]};do
         setup_repo $repo
     done
@@ -198,42 +204,75 @@ function action_setup_repo() {
 #}}}
 #{{{
 function action_push_all() {
-    boxFat 4 "#" "Pushing repos: $(echo ${LIST_OF_REPOS[@]})"
-    for repo in ${LIST_OF_REPOS[@]};do
+    boxfat 4 "#" "pushing repos: $(echo ${list_of_repos[@]})"
+    for repo in ${list_of_repos[@]};do
         cd repo/$repo
-        boxLeftChar 2 '>>>'
-        boxLeftChar 2 '>>>' "Pushing $repo"
-        boxLeftChar 2 '>>>'
-        git add -A .
+        boxleftchar 2 '>>>'
+        boxleftchar 2 '>>>' "pushing $repo"
+        boxleftchar 2 '>>>'
+        git add -a .
         git commit -v
         git push
         cd $dotfiledir
     done
 }
 #}}}
+#{{{
+function action_pull_all() {
+    boxFat 4 "#" "pushing repos: $(echo ${LIST_OF_REPOS[@]})"
+    for repo in ${LIST_OF_REPOS[@]};do
+        cd repo/$repo
+        boxLeftChar 2 '>>>'
+        boxLeftChar 2 '>>>' "Pulling $repo"
+        boxLeftChar 2 '>>>'
+        git pull
+        cd $dotfiledir
+    done
+}
+#}}}
 #{{{ 
 function action_remove_backups() {
-    while read backup;do
-        if [[ -e $backup && -L $backup ]];then
-            echo "`C 1 b`DELETE`C` $backup"
-            if [[ $OPT_ASSUME_DEFAULT == true \
-                || $OPT_INTERACTIVE == true && $(ask_yes_no "Remove backup?" "yes") = "yes" ]];then
-                rm -v $backup >/dev/null
+    for backup_tstamp in $BACKUP_DIR/*;do
+        echo "`C 2 b`$backup_tstamp`C`"
+        for backup in $backup_tstamp/.*;do
+            if [[ -L $backup ]];then
+                if [[ $OPT_ASSUME_DEFAULT == true || (\
+                    $OPT_INTERACTIVE == true && $(ask_yes_no "Remove backup?" "yes") = "yes" \
+                    )]];then
+                echo "`C 1 b`DELETE`C` $backup"
+                rm $backup
             fi
         fi
-    done < $BACKUP_LIST
-    echo "" > $BACKUP_LIST
+        if [[ -n "$(ls -A $backup_tstamp)" ]];then
+            rmdir "$backup_tstamp";
+        fi
+    done
+    done
 }
 #}}}
 #{{{ 
 function action_list_backups() {
-    while read backup;do
-        if [[ -e $backup && -L $backup ]];then
-            echo "`C 2 b`BACKUP:`C` $backup"
-        else
-            echo "`C 3 b`BACKUP (nonexistant):`C` $backup"
-        fi
-    done < $BACKUP_LIST
+    for backup_tstamp in $BACKUP_DIR/*;do
+        echo "`C 2 b`$backup_tstamp`C`"
+        for backup in $backup_tstamp/.*;do
+            if [[ -L $backup ]];then
+                echo -e "  $(basename $backup)"
+            fi
+        done
+    done
+}
+#}}}
+#{{{ 
+function action_status() {
+    for repo in ${LIST_OF_REPOS[@]};do
+        cd repo/$repo
+        echo "`C 3`Status of `C`$repo"
+        echo -en "`C 2`git fetch ... "
+        git fetch
+        echo "DONE`C`"
+        git status -s
+        cd $dotfiledir
+    done
 }
 #}}}
 
@@ -273,27 +312,26 @@ function parse_commandline() {
     # set up $GLOBAL_ACTION
     if [[ ! -z "$1" ]];then
         case "$1" in
-            "setup-repo")
-                GLOBAL_ACTION="setup-repo"
-                ;;
             "help"|"usage")
                 GLOBAL_ACTION="usage"
                 ;;
-            "push"|"push-all")
+            "push")
                 GLOBAL_ACTION="push-all"
                 ;;
-            "list-backups")
-                GLOBAL_ACTION="list-backups"
-                ;;
-            "rm-backups"|"remove-backups")
+            "rm-backups")
                 GLOBAL_ACTION="remove-backups"
                 ;;
             *)
-                GLOBAL_ACTION="usage"
+                GLOBAL_ACTION="$1"
                 ;;
         esac
     fi
     ACTION_FUNC="action_$(echo $GLOBAL_ACTION|sed 's/[-]/_/g')"
+    if [[ "$(type -t $ACTION_FUNC)" != 'function' ]];then
+        echo "`C 1 b`Unknown action: '`C`$GLOBAL_ACTION`C 1b`'"
+        action_usage
+        exit 1
+    fi
     shift
     # }}}
     # {{{
