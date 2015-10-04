@@ -204,12 +204,12 @@ function action_setup() {
 #}}}
 #{{{
 function action_push_all() {
-    boxfat 4 "#" "pushing repos: $(echo ${list_of_repos[@]})"
-    for repo in ${list_of_repos[@]};do
+    boxFat 4 "#" "pushing repos: $(echo ${list_of_repos[@]})"
+    for repo in ${LIST_OF_REPOS[@]};do
         cd repo/$repo
-        boxleftchar 2 '>>>'
-        boxleftchar 2 '>>>' "pushing $repo"
-        boxleftchar 2 '>>>'
+        boxLeftChar 2 '>>>'
+        boxLeftChar 2 '>>>' "pushing $repo"
+        boxLeftChar 2 '>>>'
         git add -a .
         git commit -v
         git push
@@ -219,7 +219,7 @@ function action_push_all() {
 #}}}
 #{{{
 function action_pull_all() {
-    boxFat 4 "#" "pushing repos: $(echo ${LIST_OF_REPOS[@]})"
+    boxFat 4 "#" "pulling repos: $(echo ${LIST_OF_REPOS[@]})"
     for repo in ${LIST_OF_REPOS[@]};do
         cd repo/$repo
         boxLeftChar 2 '>>>'
