@@ -48,6 +48,7 @@ dotfiledir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $dotfiledir
 
 export OPT_DEBUG=false
+export OPT_FETCH=false
 export OPT_INTERACTIVE=false
 export OPT_ASSUME_DEFAULT=false
 export OPT_FORCE_SETUP=false
@@ -180,6 +181,8 @@ echo "  `C 3`Options:`C`"
 echo "    `C 12`-i --interactive`C` interactive"
 echo "    `C 12`-y --noask`C`       assume defaults (i.e. don't ask)"
 echo "    `C 12`-f --force-setup`C` Setup symlinks for the repo no matter what"
+echo "    `C 12`-d --debug`C`       Debug output"
+echo "    `C 12`--fetch`C`          Fetch changes"
 echo
 echo "  `C 3`Actions:`C`"
 echo "    `C 12`help`C`             This help screen "
@@ -267,9 +270,11 @@ function action_status() {
     for repo in ${LIST_OF_REPOS[@]};do
         cd repo/$repo
         echo "`C 3`Status of `C`$repo"
-        echo -en "`C 2`git fetch ... "
-        git fetch
-        echo "DONE`C`"
+        if [[ $OPT_FETCH == true ]];then
+            echo -en "`C 2`git fetch ... "
+            git fetch
+            echo "DONE`C`"
+        fi
         git status -s
         cd $dotfiledir
     done
@@ -296,6 +301,9 @@ function parse_commandline() {
                         ;;
                     "-d"|"--debug")
                         OPT_DEBUG=true
+                        ;;
+                    "--fetch")
+                        OPT_FETCH=true
                         ;;
                 esac
                 GLOBAL_ARGS+=$1
