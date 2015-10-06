@@ -36,12 +36,6 @@ boxFat() {
     done
     echo `C`
 }
-boxLeftChar() {
-    color=$1
-    chars=$2
-    message=$3
-    echo "`C $color`$chars`C` $message"
-}
 #}}}
 
 dotfiledir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -144,9 +138,11 @@ setup_repo() {
                     echo "$(C 13)WARNING: No $confdir for $repo`C`"
                 fi
             done
-            if [ -e init.sh ];then
-                source init.sh
-            fi
+            for initsh in "init.sh" "setup.sh" "install.sh";do
+                if [ -e $initsh ];then
+                    source $initsh
+                fi
+            done
         fi
     else
         git clone "$REPO_PREFIX${repo}$REPO_SUFFIX"
@@ -168,6 +164,13 @@ function debug() {
 }
 #}}}
 
+_gitdirs() {
+    if [[ $OPT_RECURSIVE == true ]];then
+        find . -name '.git'
+    else
+        find . -maxdepth 3 -mindepth 2 -name '.git'
+    fi
+}
 # Actions
 #{{{ 
 function action_usage() {
@@ -212,9 +215,7 @@ function action_push_all() {
     boxFat 4 "#" "pushing repos: $(echo ${list_of_repos[@]})"
     for repo in ${LIST_OF_REPOS[@]};do
         cd repo/$repo
-        boxLeftChar 2 '>>>'
-        boxLeftChar 2 '>>>' "pushing $repo"
-        boxLeftChar 2 '>>>'
+        echo "`C 2`>>>`C` Pushing $repo"
         git add .
         git commit -v
         git push
@@ -225,12 +226,14 @@ function action_push_all() {
 #{{{
 function action_pull_all() {
     boxFat 4 "#" "pulling repos: $(echo ${LIST_OF_REPOS[@]})"
-    for repo in ${LIST_OF_REPOS[@]};do
-        cd repo/$repo
-        boxLeftChar 2 '>>>'
-        boxLeftChar 2 '>>>' "Pulling $repo"
-        boxLeftChar 2 '>>>'
-        git pull
+    local repos=()
+    for gitdir in $(_gitdirs);do
+        repos+=($(dirname $gitdir))
+    done
+    for repo in ${repos[@]};do
+        cd $repo
+        echo "`C 2`<<<`C` Pulling $repo"
+        git pull origin master
         cd $dotfiledir
     done
 }
@@ -270,13 +273,7 @@ function action_list_backups() {
 #{{{ 
 function action_status() {
     local repos=()
-    gitdirs=""
-    if [[ $OPT_RECURSIVE == true ]];then
-        gitdirs=$(find . -name '.git')
-    else
-        gitdirs=$(find . -maxdepth 3 -name '.git' )
-    fi
-    for gitdir in $(echo $gitdirs);do
+    for gitdir in $(_gitdirs);do
         repos+=($(dirname $gitdir))
     done
     for repo in ${repos[@]};do
@@ -337,6 +334,9 @@ function parse_commandline() {
         case "$1" in
             "help"|"usage")
                 GLOBAL_ACTION="usage"
+                ;;
+            "pull")
+                GLOBAL_ACTION="pull-all"
                 ;;
             "push")
                 GLOBAL_ACTION="push-all"
