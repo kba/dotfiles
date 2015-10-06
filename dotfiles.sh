@@ -67,8 +67,17 @@ BACKUP_DIR="$dotfiledir/.backup"
 
 repodir=$dotfiledir/repo
 LIST_OF_REPOS=()
-mapfile -t DEFAULT_REPOS < <(cat REPOLIST |grep -v '^\s*#')
-
+mapfile=()
+for include in $(cat REPOLIST |grep -v '^\s*#');do
+    if [[ ! -s "REPOLIST.skip" ]];then
+        mapfile+=($include)
+    else
+        grep -o "^${include}$" REPOLIST.skip >/dev/null
+        if [[ $? -gt 0 ]];then
+            mapfile+=($include)
+        fi
+    fi
+done
 
 if [[ ! -e $repodir ]];then
     mkdir $repodir;
@@ -96,12 +105,12 @@ export -f ask_yes_no
 #{{{
 setup_repo() {
     repo=$1
-    boxLeftChar 2 '>>>'
-    boxLeftChar 2 '>>>' "Setting up '$repo'"
-    boxLeftChar 2 '>>>'
+    echo "`C 2`SETUP`C`"
+    echo "`C 2`SETUP`C` Setting up '$repo'`C`"
+    echo "`C 2`SETUP`C`"
     cd $repodir
     if [[ -e $repo ]];then
-        boxLeftChar 1 '!!' "Repository '$repo' already exists";
+        echo "`C 1`!!`C` Repository '$repo' already exists";
         should_pull=false
         if [[ $OPT_ASSUME_DEFAULT == true || ($OPT_INTERACTIVE == true && $(ask_yes_no "Force Pull?" "yes") = "yes")]];then
             should_pull=true
@@ -111,7 +120,7 @@ setup_repo() {
         if [[ $should_pull == true ]];then
             git pull
             if [[ "$?" -gt 0 ]];then
-                boxLeftChar 1 '  !!' "Error on `C 2`git pull`C`"
+                echo "`C1`!!`C`  Error on `C 2`git pull`C`"
                 if [[ $OPT_INTERACTIVE == true && $(ask_yes_no "Open shell to resolve conflicts?") = "yes" ]];then
                     $SHELL
                 fi
@@ -154,13 +163,13 @@ setup_repo() {
 
 #{{{
 function debug() {
-    boxLeftChar 14 'DEBUG>' "Action: $(C 5 b)$GLOBAL_ACTION $(C 3)"
-    boxLeftChar 14 'DEBUG>' "Action Function: $ACTION_FUNC"
-    boxLeftChar 14 'DEBUG>' "Global args: $GLOBAL_ARGS"
-    boxLeftChar 14 'DEBUG>' "  OPT_FORCE_SETUP=$OPT_FORCE_SETUP"
-    boxLeftChar 14 'DEBUG>' "  OPT_INTERACTIVE=$OPT_INTERACTIVE"
-    boxLeftChar 14 'DEBUG>' "  OPT_ASSUME_DEFAULT=$OPT_ASSUME_DEFAULT"
-    boxLeftChar 14 'DEBUG>' "Repos: $(echo ${LIST_OF_REPOS[@]})"
+    echo "`C 14`DEBUG>`C` Action: $(C 5 b)$GLOBAL_ACTION $(C 3)"
+    echo "`C 14`DEBUG>`C` Action Function: $ACTION_FUNC"
+    echo "`C 14`DEBUG>`C` Global args: $GLOBAL_ARGS"
+    echo "`C 14`DEBUG>`C`   OPT_FORCE_SETUP=$OPT_FORCE_SETUP"
+    echo "`C 14`DEBUG>`C`   OPT_INTERACTIVE=$OPT_INTERACTIVE"
+    echo "`C 14`DEBUG>`C`   OPT_ASSUME_DEFAULT=$OPT_ASSUME_DEFAULT"
+    echo "`C 14`DEBUG>`C` Repos: $(echo ${LIST_OF_REPOS[@]})"
 }
 #}}}
 
