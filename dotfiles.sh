@@ -67,14 +67,14 @@ BACKUP_DIR="$dotfiledir/.backup"
 
 repodir=$dotfiledir/repo
 LIST_OF_REPOS=()
-mapfile=()
+typeset -a DEFAULT_REPOS
 for include in $(cat REPOLIST |grep -v '^\s*#');do
     if [[ ! -s "REPOLIST.skip" ]];then
-        mapfile+=($include)
+        DEFAULT_REPOS+=($include)
     else
         grep -o "^${include}$" REPOLIST.skip >/dev/null
         if [[ $? -gt 0 ]];then
-            mapfile+=($include)
+            DEFAULT_REPOS+=($include)
         fi
     fi
 done
