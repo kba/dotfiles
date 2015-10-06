@@ -212,13 +212,18 @@ function action_setup() {
 #}}}
 #{{{
 function action_push_all() {
-    boxFat 4 "#" "pushing repos: $(echo ${list_of_repos[@]})"
-    for repo in ${LIST_OF_REPOS[@]};do
-        cd repo/$repo
+    local repos=()
+    for gitdir in $(_gitdirs);do
+        repos+=($(dirname $gitdir))
+    done
+    echo "`C 4`#################################`C`"
+    echo "`C 4`#`C` Pushing repos: $(echo ${repos[@]}|xargs -n1 basename|xargs echo)"
+    echo "`C 4`#################################`C`"
+    for repo in ${repos[@]};do
+        cd $repo
         echo "`C 2`>>>`C` Pushing $repo"
         git add .
-        git commit -v
-        git push
+        git commit -v && git push
         cd $dotfiledir
     done
 }
