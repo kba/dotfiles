@@ -29,9 +29,9 @@
 
 
 
-#keystate_numlock = enable
-keystate_scrolllock = enable
-#keystate_capslock = enable
+keystate_numlock = enable
+#keystate_scrolllock = enable
+keystate_capslock = enable
 
 
 
@@ -80,19 +80,29 @@ keystate_scrolllock = enable
     Mod4 + F12 
 
 #Raise Volume
-"pulseaudio-ctl up"
+"volbriosd volume up"
     m:0x0 + c:123
     XF86AudioRaiseVolume 
 
 #Volume down
-"pulseaudio-ctl down"
+"volbriosd volume down"
     m:0x0 + c:122
     XF86AudioLowerVolume 
 
 #Mute Volume
-"pulseaudio-ctl mute"
+"volbriosd volume toggle_mute"
     m:0x0 + c:121
     XF86AudioMute 
+
+#Brightness up
+"volbriosd brightness up"
+    m:0x40 + c:110
+    Mod4 + Home 
+
+#Brightness down
+"volbriosd brightness down"
+    m:0x40 + c:115
+    Mod4 + End 
 
 #
 # End of xbindkeys configuration
