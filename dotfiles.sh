@@ -121,7 +121,7 @@ setup_repo() {
         cloned=true
     else
         echo "`C 1`!!`C` Repository '$repo' already exists";
-        if [[ $OPT_ASSUME_DEFAULT == true || ($OPT_INTERACTIVE == true && $(ask_yes_no "Force Pull?" "yes") = "yes")]];then
+        if [[ $OPT_FORCE_SETUP == true || $OPT_ASSUME_DEFAULT == true || ($OPT_INTERACTIVE == true && $(ask_yes_no "Force Pull?" "yes") = "yes")]];then
             should_pull=true
         fi
     fi
