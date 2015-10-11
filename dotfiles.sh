@@ -9,7 +9,7 @@ _textWidthWithoutEscapeCodes() {
     local padding=3
     [[ $2 ]] && padding=$2
     local messageLength=$(echo $message|wc -c)
-    messageLength=$(echo "$messageLength + $padding"|bc)
+    messageLength=$(( $messageLength + $padding ))
     echo $messageLength
 }
 _colorecho() {
