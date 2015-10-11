@@ -3,7 +3,8 @@ shcolor
 tmux-config
 zsh-config
 vim-config
-bash-it
+bash-config
 devilspie2-config
 powerline-fonts
 nodejs-config
+git-config

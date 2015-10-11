@@ -109,53 +109,60 @@ setup_repo() {
     echo "`C 2`SETUP`C` Setting up '$repo'`C`"
     echo "`C 2`SETUP`C`"
     cd $repodir
-    if [[ -e $repo ]];then
+
+    cloned=false
+    should_pull=false
+    if [[ ! -e $repo ]];then
+        git clone "$REPO_PREFIX${repo}$REPO_SUFFIX"
+        if [[ ! -e $repo ]];then
+            echo "`C 1 b`ERROR`C` Could not pull $REPO_PREFIX${repo}$REPO_SUFFIX"
+            exit 1
+        fi
+        cloned=true
+    else
         echo "`C 1`!!`C` Repository '$repo' already exists";
-        should_pull=false
         if [[ $OPT_ASSUME_DEFAULT == true || ($OPT_INTERACTIVE == true && $(ask_yes_no "Force Pull?" "yes") = "yes")]];then
             should_pull=true
         fi
-        #XXX
-        cd $repo
-        if [[ $should_pull == true ]];then
-            git pull
-            if [[ "$?" -gt 0 ]];then
-                echo "`C1`!!`C`  Error on `C 2`git pull`C`"
-                if [[ $OPT_INTERACTIVE == true && $(ask_yes_no "Open shell to resolve conflicts?") = "yes" ]];then
-                    $SHELL
-                fi
+    fi
+
+    cd $repo
+
+    if [[ $should_pull == true ]];then
+        git pull
+        if [[ "$?" -gt 0 ]];then
+            echo "`C1`!!`C`  Error on `C 2`git pull`C`"
+            if [[ $OPT_INTERACTIVE == true && $(ask_yes_no "Open shell to resolve conflicts?") = "yes" ]];then
+                $SHELL
             fi
         fi
-        if [[ $OPT_FORCE_SETUP = true || ($OPT_INTERACTIVE == true && $(ask_yes_no "Force Setup?" "no") == "yes") ]];then
-            for confdir in ".HOME" ".XDG_CONFIG_HOME";do
-                targetdir=~
-                if [[ $confdir == ".XDG_CONFIG_HOME" ]];then
-                    targetdir=~/.config
-                fi
-                backup_tstamp="$BACKUP_DIR/$now/$confdir"
-                # echo $backup_tstamp
-                if [ -e $confdir ];then
-                    for dotfile in $(find $confdir -mindepth 1 -name '*' -exec basename {} \;);do
-                        backup="$backup_tstamp/$dotfile"
-                        mkdir -p $backup_tstamp
-                        echo "`C 3`BACKUP`C` `C 1`$targetdir/$dotfile`C` -> $backup"
-                        mv -v "$targetdir/$dotfile" "$backup"
-                        echo "`C 2`SYMLINK`C` $repo/$confdir/$dotfile -> `C 2`$targetdir/$dotfile`C`"
-                        ln -s "$(readlink -f $confdir/$dotfile)" "$targetdir/$dotfile"
-                    done
-                else
-                    echo "$(C 13)WARNING: No $confdir for $repo`C`"
-                fi
-            done
-            for initsh in "init.sh" "setup.sh" "install.sh";do
-                if [ -e $initsh ];then
-                    source $initsh
-                fi
-            done
-        fi
-    else
-        git clone "$REPO_PREFIX${repo}$REPO_SUFFIX"
-        setup_repo $repo
+    fi
+    if [[ $cloned == true || $OPT_FORCE_SETUP == true|| ($OPT_INTERACTIVE == true && $(ask_yes_no "Force Setup?" "no") == "yes") ]];then
+        for confdir in ".HOME" ".XDG_CONFIG_HOME";do
+            targetdir=~
+            if [[ $confdir == ".XDG_CONFIG_HOME" ]];then
+                targetdir=~/.config
+            fi
+            backup_tstamp="$BACKUP_DIR/$now/$confdir"
+            # echo $backup_tstamp
+            if [ -e $confdir ];then
+                for dotfile in $(find $confdir -mindepth 1 -name '*' -exec basename {} \;);do
+                    backup="$backup_tstamp/$dotfile"
+                    mkdir -p $backup_tstamp
+                    echo "`C 3`BACKUP`C` `C 1`$targetdir/$dotfile`C` -> $backup"
+                    mv -v "$targetdir/$dotfile" "$backup"
+                    echo "`C 2`SYMLINK`C` $repo/$confdir/$dotfile -> `C 2`$targetdir/$dotfile`C`"
+                    ln -s "$(readlink -f $confdir/$dotfile)" "$targetdir/$dotfile"
+                done
+            else
+                echo "$(C 13)WARNING: No $confdir for $repo`C`"
+            fi
+        done
+        for initsh in "init.sh" "setup.sh" "install.sh";do
+            if [ -e $initsh ];then
+                source $initsh
+            fi
+        done
     fi
     cd $dotfiledir
 }

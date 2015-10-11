@@ -80,12 +80,12 @@ keystate_capslock = enable
     Mod4 + F12 
 
 #Raise Volume
-"volbriosd volume up"
+"volbriosd volume inc"
     m:0x0 + c:123
     XF86AudioRaiseVolume 
 
 #Volume down
-"volbriosd volume down"
+"volbriosd volume dec"
     m:0x0 + c:122
     XF86AudioLowerVolume 
 
@@ -95,12 +95,12 @@ keystate_capslock = enable
     XF86AudioMute 
 
 #Brightness up
-"volbriosd brightness up"
+"volbriosd brightness inc"
     m:0x40 + c:110
     Mod4 + Home 
 
 #Brightness down
-"volbriosd brightness down"
+"volbriosd brightness dec"
     m:0x40 + c:115
     Mod4 + End 
 
