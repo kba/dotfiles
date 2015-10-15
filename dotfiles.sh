@@ -113,7 +113,7 @@ setup_repo() {
     cloned=false
     should_pull=false
     if [[ ! -e $repo ]];then
-        git clone "$REPO_PREFIX${repo}$REPO_SUFFIX"
+        git clone --depth 5 "$REPO_PREFIX${repo}$REPO_SUFFIX"
         if [[ ! -e $repo ]];then
             echo "`C 1 b`ERROR`C` Could not pull $REPO_PREFIX${repo}$REPO_SUFFIX"
             exit 1
