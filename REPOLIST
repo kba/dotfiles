@@ -1,9 +1,10 @@
 home-bin
 shcolor
 tmux-config
-zsh-config
 vim-config
 bash-config
+zsh-config
+screen-config
 devilspie2-config
 fonts-config
 nodejs-config
