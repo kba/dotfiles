@@ -1,12 +1,1 @@
-home-bin
-shcolor
-tmux-config
-vim-config
-bash-config
-zsh-config
-screen-config
-devilspie2-config
-fonts-config
-nodejs-config
-git-config
-distro-config
+REPOLIST.server

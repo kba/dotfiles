@@ -1,15 +1,18 @@
 #!/bin/bash
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
+bash $DIR/synaptics.sh&
+setxkbmap -option grp:alt_space_toggle us,de
+
+    # volbrid
 for cmd in $(echo "
     nm-applet
-    devilspie2
     fbxkb
     guake
-    xbindkeys
     redshift-gtk
     clipit
     conky
+    xbindkeys
     ");do
     if which $cmd >/dev/null 2>&1; then
         echo pkill -f "$cmd"
@@ -20,6 +23,4 @@ for cmd in $(echo "
         echo "Not installed: $cmd"
     fi
 done
-bash $DIR/synaptics.sh&
-setxkbmap -option grp:alt_space_toggle us,de
-compiz --replace&
+sleep 10 && compiz --replace&

@@ -38,7 +38,7 @@ total_run_times 0
 # Create own window instead of using desktop (required in nautilus)
 # possible types: override, dock, normal, desktop
 own_window yes
-own_window_type desktop
+own_window_type override
 own_window_hints below
 
 # Text alignment, other possible values are commented
