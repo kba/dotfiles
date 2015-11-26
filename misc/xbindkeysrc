@@ -109,5 +109,20 @@ keystate_capslock = enable
     m:0x0 + c:198
     XF86AudioMicMute 
 
+#Move to other Monitor
+"move-to-next-monitor"
+    m:0x40 + c:27
+    Mod4 + r 
+
+#Previous Workspace
+"volbri workspace dec"
+    m:0x40 + c:43
+    Mod4 + h 
+
+#Next Workspace
+"volbri workspace inc"
+    m:0x40 + c:46
+    Mod4 + l 
+
 #
 # End of xbindkeys configuration
