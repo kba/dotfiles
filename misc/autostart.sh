@@ -5,6 +5,8 @@ bash $DIR/synaptics.sh&
 setxkbmap -option grp:alt_space_toggle us,de
 
     # volbrid
+# compiz --replace&
+xfwm4 &
 for cmd in $(echo "
     nm-applet
     fbxkb
@@ -23,4 +25,3 @@ for cmd in $(echo "
         echo "Not installed: $cmd"
     fi
 done
-sleep 10 && compiz --replace&
