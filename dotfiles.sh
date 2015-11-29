@@ -51,6 +51,11 @@ export OPT_FORCE_SETUP=false
 export REPO_PREFIX="https://github.com/kba/"
 export REPO_SUFFIX=".git"
 
+LOCAL_PROFILE="$dotfiledir/dotfiles.profile.sh"
+if [[ -e "$LOCAL_PROFILE" ]];then
+    source "$LOCAL_PROFILE" 
+fi
+
 # The global action
 export GLOBAL_ACTION="usage"
 
