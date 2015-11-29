@@ -136,7 +136,7 @@ setup_repo() {
     if [[ $should_pull == true ]];then
         git pull
         if [[ "$?" -gt 0 ]];then
-            echo "`C1`!!`C`  Error on `C 2`git pull`C`"
+            echo "`C 1`!!`C`  Error on `C 2`git pull`C`"
             if [[ $OPT_INTERACTIVE == true && $(ask_yes_no "Open shell to resolve conflicts?") = "yes" ]];then
                 $SHELL
             fi
