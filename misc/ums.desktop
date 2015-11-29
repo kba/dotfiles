@@ -1,8 +1,0 @@
-[Desktop Entry]
-Comment=
-Terminal=false
-Name=Universal Media Server
-Exec=UMS.sh
-Type=Application
-Categories=Internet
-Icon=/home/kb/build/ums-5.2.2/web/favicon.ico
