@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source ~/.shcolor.sh 2>/dev/null || source <(curl -s https://raw.githubusercontent.com/kba/shcolor/master/shcolor.sh|tee ~/.shcolor.sh)
+source ~/.shcolor.sh 2>/dev/null || source <(wget -qO- https://raw.githubusercontent.com/kba/shcolor/master/shcolor.sh|tee ~/.shcolor.sh)
 
 #{{{ 
 # Utility functions for drawing stuff
