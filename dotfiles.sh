@@ -51,6 +51,11 @@ export OPT_FORCE_SETUP=false
 export REPO_PREFIX="https://github.com/kba/"
 export REPO_SUFFIX=".git"
 
+LOCAL_PROFILE="$dotfiledir/dotfiles.profile.sh"
+if [[ -e "$LOCAL_PROFILE" ]];then
+    source "$LOCAL_PROFILE" 
+fi
+
 # The global action
 export GLOBAL_ACTION="usage"
 
@@ -131,7 +136,7 @@ setup_repo() {
     if [[ $should_pull == true ]];then
         git pull
         if [[ "$?" -gt 0 ]];then
-            echo "`C1`!!`C`  Error on `C 2`git pull`C`"
+            echo "`C 1`!!`C`  Error on `C 2`git pull`C`"
             if [[ $OPT_INTERACTIVE == true && $(ask_yes_no "Open shell to resolve conflicts?") = "yes" ]];then
                 $SHELL
             fi
