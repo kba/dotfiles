@@ -5,41 +5,41 @@ source ~/.shcolor.sh 2>/dev/null || source <(wget -qO- https://raw.githubusercon
 #{{{ 
 # Utility functions for drawing stuff
 _textWidthWithoutEscapeCodes() {
-    local message=$(echo $1|sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")
+    local message=$(echo "$1"|sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")
     local padding=3
     [[ $2 ]] && padding=$2
     local messageLength=$(echo $message|wc -c)
-    messageLength=$(( $messageLength + $padding ))
+    messageLength=$(( messageLength + padding ))
     echo $messageLength
 }
 _colorecho() {
-    echo -ne "$(C $2)$1"
+    echo -ne "$(C "$2")$1"
 }
 boxFat() {
     color=$1
     char=$2
     message=$3
     width=$(_textWidthWithoutEscapeCodes "$message" 4)
-    echo -ne $(C $color)
-    for i in $(seq $width);do
-        echo -ne $2
+    echo -ne "$(C "$color")"
+    for i in $(seq "$width");do
+        echo -ne "$2"
     done
     echo
     _colorecho "$char" "$color"
     _colorecho " $message "
-    echo -ne $(C 0)
+    echo -ne "$(C 0)"
     _colorecho "$char" "$color"
     echo
-    echo -ne $(C $color)
-    for i in $(seq $width);do
-        echo -ne $2
+    echo -ne "$(C "$color")"
+    for i in $(seq "$width");do
+        echo -ne "$2"
     done
-    echo `C`
+    C
 }
 #}}}
 
 dotfiledir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd $dotfiledir
+cd "$dotfiledir"
 
 export OPT_DEBUG=false
 export OPT_RECURSIVE=false
@@ -68,12 +68,12 @@ export ACTION_FUNC
 now=$(date +"%Y-%m-%dT%H:%M:%SZ")
 
 BACKUP_DIR="$dotfiledir/.backup"
-[[ ! -e $BACKUP_DIR ]] && mkdir $BACKUP_DIR;
+[[ ! -e "$BACKUP_DIR" ]] && mkdir "$BACKUP_DIR";
 
 repodir=$dotfiledir/repo
 LIST_OF_REPOS=()
 typeset -a DEFAULT_REPOS
-for include in $(cat REPOLIST |grep -v '^\s*#');do
+for include in $(grep -v '^\s*#' REPOLIST);do
     if [[ ! -s "REPOLIST.skip" ]];then
         DEFAULT_REPOS+=($include)
     else
@@ -84,21 +84,21 @@ for include in $(cat REPOLIST |grep -v '^\s*#');do
     fi
 done
 
-if [[ ! -e $repodir ]];then
-    mkdir $repodir;
+if [[ ! -e "$repodir" ]];then
+    mkdir "$repodir";
 fi
 
 #{{{
 ask_yes_no() {
     default_to_yes=$2
     if [[ ! -z $default_to_yes && "$default_to_yes" == "yes" ]];then
-        echo -n "`C 87 b`??`C` $1 <`C 1`Y`C`es/o> " >&2
+        echo -n "$(C 87 b)??$(C) $1 < $(C 1)Y$(C)es/o> " >&2
         read yesno
         if [[ -z "$yesno" || "$yesno" == "yes" || "$yesno" == "y" ]];then
             echo "yes"
         fi
     else
-        echo -n "`C 87 b`??`C` $1 <yes/`C 1`N`C`o> " >&2
+        echo -n "$(C 87 b)??$(C) $1 <yes/$(C 1)N$(C)o> " >&2
         read yesno
         if [[ "$yesno" == "yes" || "$yesno" == "y" ]];then
             echo "yes"
@@ -110,33 +110,33 @@ export -f ask_yes_no
 #{{{
 setup_repo() {
     repo=$1
-    echo "`C 2`SETUP`C`"
-    echo "`C 2`SETUP`C` Setting up '$repo'`C`"
-    echo "`C 2`SETUP`C`"
-    cd $repodir
+    echo "$(C 2)SETUP$(C)"
+    echo "$(C 2)SETUP$(C) Setting up '$repo'$(C)"
+    echo "$(C 2)SETUP$(C)"
+    cd "$repodir"
 
     cloned=false
     should_pull=false
     if [[ ! -e $repo ]];then
         git clone --depth 5 "$REPO_PREFIX${repo}$REPO_SUFFIX"
         if [[ ! -e $repo ]];then
-            echo "`C 1 b`ERROR`C` Could not pull $REPO_PREFIX${repo}$REPO_SUFFIX"
+            echo "$(C 1 b)ERROR$(C) Could not pull $REPO_PREFIX${repo}$REPO_SUFFIX"
             exit 1
         fi
         cloned=true
     else
-        echo "`C 1`!!`C` Repository '$repo' already exists";
+        echo "$(C 1)!!$(C) Repository '$repo' already exists";
         if [[ $OPT_FORCE_SETUP == true || $OPT_ASSUME_DEFAULT == true || ($OPT_INTERACTIVE == true && $(ask_yes_no "Force Pull?" "yes") = "yes")]];then
             should_pull=true
         fi
     fi
 
-    cd $repo
+    cd "$repo"
 
     if [[ $should_pull == true ]];then
         git pull
         if [[ "$?" -gt 0 ]];then
-            echo "`C 1`!!`C`  Error on `C 2`git pull`C`"
+            echo "$(C 1)!!$(C)  Error on $(C 2)git pull$(C)"
             if [[ $OPT_INTERACTIVE == true && $(ask_yes_no "Open shell to resolve conflicts?") = "yes" ]];then
                 $SHELL
             fi
@@ -153,14 +153,14 @@ setup_repo() {
             if [ -e $confdir ];then
                 for dotfile in $(find $confdir -mindepth 1 -name '*' -exec basename {} \;);do
                     backup="$backup_tstamp/$dotfile"
-                    mkdir -p $backup_tstamp
-                    echo "`C 3`BACKUP`C` `C 1`$targetdir/$dotfile`C` -> $backup"
+                    mkdir -p "$backup_tstamp"
+                    echo "$(C 3)BACKUP$(C) $(C 1)$targetdir/$dotfile$(C) -> $backup"
                     mv -v "$targetdir/$dotfile" "$backup"
-                    echo "`C 2`SYMLINK`C` $repo/$confdir/$dotfile -> `C 2`$targetdir/$dotfile`C`"
-                    ln -s "$(readlink -f $confdir/$dotfile)" "$targetdir/$dotfile"
+                    echo "$(C 2)SYMLINK$(C) $repo/$confdir/$dotfile -> $(C 2)$targetdir/$dotfile$(C)"
+                    ln -s "$(readlink -f "$confdir/$dotfile")" "$targetdir/$dotfile"
                 done
             else
-                echo "$(C 13)WARNING: No $confdir for $repo`C`"
+                echo "$(C 13)WARNING: No $confdir for $repo$(C)"
             fi
         done
         for initsh in "init.sh" "setup.sh" "install.sh";do
@@ -175,13 +175,13 @@ setup_repo() {
 
 #{{{
 function debug() {
-    echo "`C 14`DEBUG>`C` Action: $(C 5 b)$GLOBAL_ACTION $(C 3)"
-    echo "`C 14`DEBUG>`C` Action Function: $ACTION_FUNC"
-    echo "`C 14`DEBUG>`C` Global args: $GLOBAL_ARGS"
-    echo "`C 14`DEBUG>`C`   OPT_FORCE_SETUP=$OPT_FORCE_SETUP"
-    echo "`C 14`DEBUG>`C`   OPT_INTERACTIVE=$OPT_INTERACTIVE"
-    echo "`C 14`DEBUG>`C`   OPT_ASSUME_DEFAULT=$OPT_ASSUME_DEFAULT"
-    echo "`C 14`DEBUG>`C` Repos: $(echo ${LIST_OF_REPOS[@]})"
+    echo "$(C 14)DEBUG>$(C) Action: $(C 5 b)$GLOBAL_ACTION $(C 3)"
+    echo "$(C 14)DEBUG>$(C) Action Function: $ACTION_FUNC"
+    echo "$(C 14)DEBUG>$(C) Global args: ${GLOBAL_ARGS[*]}"
+    echo "$(C 14)DEBUG>$(C)   OPT_FORCE_SETUP=$OPT_FORCE_SETUP"
+    echo "$(C 14)DEBUG>$(C)   OPT_INTERACTIVE=$OPT_INTERACTIVE"
+    echo "$(C 14)DEBUG>$(C)   OPT_ASSUME_DEFAULT=$OPT_ASSUME_DEFAULT"
+    echo "$(C 14)DEBUG>$(C) Repos: $(echo ${LIST_OF_REPOS[@]})"
 }
 #}}}
 
