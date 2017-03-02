@@ -157,7 +157,7 @@ setup_repo() {
                     echo "$(C 3)BACKUP$(C) $(C 1)$targetdir/$dotfile$(C) -> $backup"
                     mv -v "$targetdir/$dotfile" "$backup"
                     echo "$(C 2)SYMLINK$(C) $repo/$confdir/$dotfile -> $(C 2)$targetdir/$dotfile$(C)"
-                    ln -s "$(readlink -f "$confdir/$dotfile")" "$targetdir/$dotfile"
+                    ln -fs "$(readlink -f "$confdir/$dotfile")" "$targetdir/$dotfile"
                 done
             else
                 echo "$(C 13)WARNING: No $confdir for $repo$(C)"
