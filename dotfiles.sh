@@ -119,7 +119,7 @@ _setup_repo() {
                     _log "BACKUP" "$(C 1)$targetdir/$dotfile$(C) -> $backup"
                     mv -v "$targetdir/$dotfile" "$backup"
                     _log "SYMLINK" "$repo/$confdir/$dotfile -> $(C 2)$targetdir/$dotfile$(C)"
-                    ln -s "$(readlink -f "$confdir/$dotfile")" "$targetdir/$dotfile"
+                    ln -fs "$(readlink -f "$confdir/$dotfile")" "$targetdir/$dotfile"
                 done
             else
                 _warn "No $confdir for $repo"
