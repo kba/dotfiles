@@ -39,7 +39,6 @@ _debug() {
     (
         env | grep '^DOTFILES'|sort
         echo "LIST_OF_REPOS=${LIST_OF_REPOS[*]}"
-        echo "GLOBAL_ARGS=${GLOBAL_ARGS[*]}"
         echo "GLOBAL_ACTION=$GLOBAL_ACTION"
         echo "ACTION_FUNC=$ACTION_FUNC"
     ) | while read decl;do
@@ -278,86 +277,52 @@ action_usage() {
 
 #
 # Parse Command line arguments
-#
-#{{{
-parse_commandline() {
-    # {{{
-    # set up GLOBAL_ARGS 
+main() {
+    export GLOBAL_ACTION="usage"
+    export ACTION_FUNC
+
     while (( "$#" ));do
-        case "$1" in
-            -*)
-                case "$1" in
-                    "-i"|"--interactive")
-                        DOTFILES_OPT_INTERACTIVE=true
-                        ;;
-                    "-f"|"--force-setup")
-                        DOTFILES_OPT_FORCE=true
-                        ;;
-                    "-y"|"--noask")
-                        DOTFILES_OPT_ASSUME_DEFAULT=true
-                        ;;
-                    "-d"|"--debug")
-                        DOTFILES_OPT_DEBUG=true
-                        ;;
-                    "-r"|"--recursive")
-                        DOTFILES_OPT_RECURSIVE=true
-                        ;;
-                    "--fetch")
-                        DOTFILES_OPT_FETCH=true
-                        ;;
-                esac
-                GLOBAL_ARGS+=$1
-                shift
-                ;;
-            # TODO GLOBAL_ACTION
-            *)
-            break
-            ;;
-        esac
+        if [[ "$1" = -* ]];then
+            case "$1" in
+                "-i"|"--interactive") DOTFILES_OPT_INTERACTIVE=true ;;
+                "-f"|"--force-setup") DOTFILES_OPT_FORCE=true ;;
+                "-y"|"--noask")       DOTFILES_OPT_ASSUME_DEFAULT=true ;;
+                "-d"|"--debug")       DOTFILES_OPT_DEBUG=true ;;
+                "-r"|"--recursive")   DOTFILES_OPT_RECURSIVE=true ;;
+                "--fetch")            DOTFILES_OPT_FETCH=true ;;
+            esac
+            shift
+        fi
     done
-    # }}}
-    # {{{
-    # set up $GLOBAL_ACTION
+
     if [[ ! -z "$1" ]];then
         case "$1" in
-            "help"|"usage")
-                GLOBAL_ACTION="usage"
-                ;;
-            "pull")
-                GLOBAL_ACTION="pull-all"
-                ;;
-            "push")
-                GLOBAL_ACTION="push-all"
-                ;;
-            "rm-backups")
-                GLOBAL_ACTION="remove-backups"
-                ;;
-            *)
-                GLOBAL_ACTION="$1"
-                ;;
+            "help"|"usage") GLOBAL_ACTION="usage" ;;
+            "pull") GLOBAL_ACTION="pull-all" ;;
+            "push") GLOBAL_ACTION="push-all" ;;
+            "rm-backups") GLOBAL_ACTION="remove-backups" ;;
+            *) GLOBAL_ACTION="$1" ;;
         esac
     fi
-    # ACTION_FUNC="action_$(echo "$GLOBAL_ACTION"|sed 's/[-]/_/g')"
+
     ACTION_FUNC="action_${GLOBAL_ACTION//-/_}"
     if [[ "$(type -t "$ACTION_FUNC")" != 'function' ]];then
-        echo "`C 1 b`Unknown action: '`C`$GLOBAL_ACTION`C 1b`'"
+        _error "Unknown action: $GLOBAL_ACTION"
         action_usage
         exit 1
     fi
     shift
-    # }}}
-    # {{{
+
     # set up LIST_OF_REPOS
-    if [[ $@ == "" ]];then
+    if [[ $# == 0 ]];then
         LIST_OF_REPOS=("${DEFAULT_REPOS[@]}")
     else
         args=("$@")
         LIST_OF_REPOS=("${args[@]}")
     fi
-    # echo "${LIST_OF_REPOS[@]}"
-    #}}}
+
+    $ACTION_FUNC
 }
-#}}}
 
 #
 # Configuration 
@@ -373,12 +338,6 @@ source "$DOTFILEDIR/profile.default.sh"
 [[ ! -e "$DOTFILES_BACKUPDIR"   ]] && mkdir "$DOTFILES_BACKUPDIR";
 [[ -e "$DOTFILES_LOCAL_PROFILE" ]] && source "$DOTFILES_LOCAL_PROFILE"
 
-# The global action
-export GLOBAL_ACTION="usage"
-
-# The 
-export GLOBAL_ARGS=()
-export ACTION_FUNC
 
 LIST_OF_REPOS=()
 typeset -a DEFAULT_REPOS
@@ -395,9 +354,6 @@ for include in $(grep -v '^\s*#' REPOLIST);do
 done
 #}}}
 
-# now=$(date +%s%N)
-now=$(date +"%Y-%m-%dT%H:%M:%SZ")
 
-parse_commandline "$@"
-
-$ACTION_FUNC
+now=$(date +"%Y-%m-%dT%H-%M-%SZ")
+main "$@"
