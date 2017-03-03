@@ -1,10 +1,24 @@
-kba's dotfiles setup
-====================
+# kba's dotfiles setup
 
 ![dotfile all the dotfiles](meme.png)
 
-Why another dotfiles framework
-------------------------------
+<!-- BEGIN-MARKDOWN-TOC -->
+* [Why another dotfiles framework](#why-another-dotfiles-framework)
+* [Design Goals](#design-goals)
+	* [Written in Bash](#written-in-bash)
+	* [Use Git repositories](#use-git-repositories)
+	* [Use symbolic links](#use-symbolic-links)
+	* [Backups included](#backups-included)
+	* [Allow customization of setup](#allow-customization-of-setup)
+	* [Make dotfiles fun to use](#make-dotfiles-fun-to-use)
+* [Mechanics](#mechanics)
+	* [Symlinks](#symlinks)
+	* [Setup scripts](#setup-scripts)
+* [CLI](#cli)
+
+<!-- END-MARKDOWN-TOC -->
+
+## Why another dotfiles framework
 
 I have to set up new accounts on servers, virtual machines and servers running
 Linux or Mac OSX on a regular basis. Setting up a comfortable development
@@ -13,8 +27,7 @@ environment becomes tedious quickly.
 And none of the existing ones I tried offered the flexibility,
 simplicity and features [I](https://github.com/kba) wanted.
 
-Design Goals
-------------
+## Design Goals
 
 ### Written in Bash
 
@@ -58,5 +71,74 @@ subcommand-based tools. Using [colors](https://github.com/kba/shcolor),
 documentation and online help should make the user experience as smooth as
 possible.
 
-How to use
-----------
+## Mechanics
+
+This repository lives somewhere in `$HOME`, I use `$HOME/dotfiles`, i.e.:
+
+```sh
+cd
+git clone https://github.com/kba/dotfiles
+```
+
+Let's assume `$DOFILEDIR` holds this location (it [does](./dotfiles.sh#L41)).
+
+Repos live in `$DOTFILEDIR/repo`.
+
+### Symlinks
+
+Every repo may contain directories with a leading dot and all-caps. The
+name of this directory is interpreted as an environemnt variable that contains
+an actual path.
+
+Examples:
+
+* `.HOME` => `$HOME` (i.e. `/home/<username>`)
+* `.XDG_CONFIG_DIR` => `$XDG_CONFIG_DIR` (i.e. `$HOME/.config`)
+
+These directories may contain **relative** symbolic links to a file in the
+repository. These symbolic links will be dereferenced and recreated in the
+appropriate directories pointing to the actual file.
+
+For example
+
+* `$DOTFILEDIR/repo/some-repo/.HOME/.mytoolrc -> '../mytoolrc'`
+
+will be set up 
+
+* `$HOME/.mytoolrc -> $DOTFILEDIR/repo/some-repo/mytoolrc`
+
+### Setup scripts
+
+Some tools will require additional steps beyond [setting up
+symlinks](#symlinks). These steps can be done with a shell script in the root
+of a repository.
+
+It may be called either
+
+* `init.sh`
+* `setup.sh`
+
+This script will be executed after every setup of a repository.
+
+## CLI
+
+```
+./dotfiles.sh  [options] <action> [repo...]
+
+  Options:
+    -f --force       Setup symlinks for the repo no matter what
+    -a --all         Run command on all existing repos
+    -i --interactive Ask for confirmation
+    -y --noask       Assume defaults (i.e. don't ask but assume yes)
+    -F --fetch       Fetch changes
+    -r --recursive   Check for git repos recursively
+    -d --debug       Show Debug output
+
+  Actions:
+    setup        Setup repositories
+    list-backups Remove all timestamped backups
+    rm-backups   Remove all timestamped backups
+    pull         git pull for each repo
+    push         git push for each repo
+    status       git status for each repos
+```
