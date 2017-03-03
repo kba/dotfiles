@@ -4,60 +4,15 @@
 # Helper functions
 # Utility functions for drawing stuff
 #
-#{{{ 
-_textWidthWithoutEscapeCodes() {
-    local message=$(echo "$1"|sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")
-    local padding=3
-    [[ $2 ]] && padding=$2
-    local messageLength=$(echo "$message"|wc -c)
-    messageLength=$(( messageLength + padding ))
-    echo $messageLength
-}
-#}}}
-#{{{ 
-_colorecho() {
-    echo -ne "$(C "$2")$1"
-}
-#}}} 
 #{{{
-_error() {
-  echo "$(C 1 b)ERROR$(C) $*";
-}
-#}}} 
-#{{{
-_warn() {
-  echo "$(C 4)!!$(C) $*";
-}
-#}}} 
-#{{{
-_info() {
-    echo -ne "$(C 2)$1$(C)"
+_log() {
+    echo -ne "$(C 2)$1$(C) "
     shift
     echo -e "$*"
 }
+_error() { _log "$(C 1 b)ERROR" "$*"; }
+_warn() { echo "$(C 3)WARN$(C) $*"; }
 #}}} 
-#{{{ 
-_box_fat() {
-    local color=$1
-    local char=$2
-    local message=$3
-    local width=$(_textWidthWithoutEscapeCodes "$message" 4)
-    echo -ne "$(C "$color")"
-    # shellcheck disable=SC2034
-    for i in $(seq "$width");do echo -ne "$2"; done
-    echo
-    _colorecho "$char" "$color"
-    _colorecho " $message "
-    echo -ne "$(C 0)"
-    _colorecho "$char" "$color"
-    echo
-    echo -ne "$(C "$color")"
-    # shellcheck disable=SC2034
-    for i in $(seq "$width");do echo -ne "$2"; done
-    # shellcheck disable=SC2005
-    echo "$(C)"
-}
-#}}}
 #{{{
 _ask_yes_no() {
     default_to_yes=$2
@@ -90,7 +45,7 @@ _debug() {
     ) | while read decl;do
         local k=${decl%%=*}
         local v=${decl##*=}
-        _info "$k" "=$v"
+        _log "$k" "=$v"
     done|column -s= -t
 }
 #}}}
@@ -106,13 +61,13 @@ _gitdirs() {
 #{{{
 _setup_repo() {
     repo=$1
-    _info "SETUP"
-    _info "SETUP" "Setting up '$repo'"
-    _info "SETUP"
+    _log "SETUP"
+    _log "SETUP" "Setting up '$repo'"
+    _log "SETUP"
     cd "$DOTFILES_REPODIR"
 
-    cloned=false
-    should_pull=false
+    local cloned=false
+    local should_pull=false
 
     # Try to clone
     if [[ ! -e $repo ]];then
@@ -158,19 +113,18 @@ _setup_repo() {
                 targetdir=~/.config
             fi
             backup_tstamp="$DOTFILES_BACKUPDIR/$now/$confdir"
-            # echo $backup_tstamp
             if [ -e $confdir ];then
                 # shellcheck disable=SC2044
                 for dotfile in $(find "$confdir" -mindepth 1 -name '*' -exec basename {} \;);do
                     backup="$backup_tstamp/$dotfile"
                     mkdir -p "$backup_tstamp"
-                    echo "$(C 3)BACKUP$(C) $(C 1)$targetdir/$dotfile$(C) -> $backup"
+                    _log "BACKUP" "$(C 1)$targetdir/$dotfile$(C) -> $backup"
                     mv -v "$targetdir/$dotfile" "$backup"
-                    echo "$(C 2)SYMLINK$(C) $repo/$confdir/$dotfile -> $(C 2)$targetdir/$dotfile$(C)"
+                    _log "SYMLINK" "$repo/$confdir/$dotfile -> $(C 2)$targetdir/$dotfile$(C)"
                     ln -s "$(readlink -f "$confdir/$dotfile")" "$targetdir/$dotfile"
                 done
             else
-                echo "$(C 13)WARNING: No $confdir for $repo$(C)"
+                _warn "No $confdir for $repo"
             fi
         done
         for initsh in "init.sh" "setup.sh" "install.sh";do
@@ -184,13 +138,12 @@ _setup_repo() {
 }
 #}}}
 
-
 #
 # Actions
 #
 #{{{ action_setup
 action_setup() {
-    _box_fat 4 '#' "Setting up: `C 3 b` ${LIST_OF_REPOS[*]}`C`"
+    _log "Setting up" "${LIST_OF_REPOS[*]}"
     for repo in "${LIST_OF_REPOS[@]}";do
         _setup_repo "$repo"
     done
@@ -202,12 +155,12 @@ action_push_all() {
     for gitdir in $(_gitdirs);do
         repos+=($(dirname "$gitdir"))
     done
-    echo "`C 4`#################################`C`"
-    echo "`C 4`#`C` Pushing repos: $(echo ${repos[@]}|xargs -n1 basename|xargs echo)"
-    echo "`C 4`#################################`C`"
+    _log "Pushing repos" "$(echo ${repos[@]}|xargs -n1 basename|xargs echo)"
     for repo in ${repos[@]};do
         cd $repo
-        echo "`C 2`>>>`C` Pushing $repo"
+        _log "PUSH"
+        _log "PUSH" "Pushing $repo"
+        _log "PUSH"
         git add .
         git commit -v && git push
         cd "$DOTFILEDIR"
@@ -216,14 +169,16 @@ action_push_all() {
 #}}}
 #{{{
 action_pull_all() {
-    _box_fat 4 "#" "pulling repos: $(echo ${LIST_OF_REPOS[@]})"
+    _log "Pulling repos" "${LIST_OF_REPOS[*]}"
     local repos=()
     for gitdir in $(_gitdirs);do
         repos+=($(dirname "$gitdir"))
     done
     for repo in ${repos[@]};do
         cd $repo
-        echo "`C 2`<<<`C` Pulling $repo"
+        _log "PULL"
+        _log "PULL" "Pulling $repo"
+        _log "PULL"
         git pull origin master
         cd "$DOTFILEDIR"
     done
@@ -258,10 +213,10 @@ action_remove_backups() {
 #{{{ 
 action_list_backups() {
     for backup_tstamp in $DOTFILES_BACKUPDIR/*;do
-        echo "`C 2 b`$backup_tstamp`C`"
+        _log "$backup_tstamp"
         for backup in $backup_tstamp/.*;do
             if [[ -L $backup ]];then
-                echo -e "  $(basename "$backup")"
+                _log "    " "$(basename "$backup")"
             fi
         done
     done
@@ -274,47 +229,50 @@ action_status() {
         repos+=($(dirname "$gitdir"))
     done
     for repo in "${repos[@]}";do
-        cd $repo
-        echo "`C 3`Status of `C`$repo"
+        pushd $repo
+        _log "STATUS" "$repo"
         if [[ $DOTFILES_OPT_FETCH == true ]];then
             echo -en "`C 2`git fetch ... "
             git fetch
             echo "DONE`C`"
         fi
         git status -s
-        cd "$DOTFILEDIR"
+        popd
     done
 }
 #}}}
 #{{{ 
 action_usage() {
-  echo "`C 10`$0 `C` [-iyf] [--force-setup] <action> <repo>"
-  echo
-  echo "  `C 3`Repos:`C` [Default: all of them]"
-  for repo in "${LIST_OF_REPOS[@]}";do
-    echo -e "    `C 12`$repo`C`\t     $DOTFILES_REPO_PREFIX$repo$DOTFILES_REPO_SUFFIX"
-  done;
-  echo
-  echo "  `C 3`Options:`C`"
-  echo "    `C 12`-i --interactive`C` interactive"
-  echo "    `C 12`-y --noask`C`       assume defaults (i.e. don't ask)"
-  echo "    `C 12`-f --force-setup`C` Setup symlinks for the repo no matter what"
-  echo "    `C 12`-d --debug`C`       Debug output"
-  echo "    `C 12`--fetch`C`          Fetch changes"
-  echo "    `C 12`-r --recursive`C`   Check for git repos recursively"
-  echo
-  echo "  `C 3`Actions:`C`"
-  echo "    `C 12`setup`C`            Setup repositories"
-  echo "    `C 12`debug`C`            This help screen "
-  echo "    `C 12`help`C`             This help screen "
-  echo "    `C 12`list-backups`C`     Remove all timestamped backups"
-  echo "    `C 12`rm-backups`C`       Remove all timestamped backups"
-  echo "    `C 12`pull-all`C`         Pull all changes"
-  echo "    `C 12`push-all`C`         Push all changes"
-  echo "    `C 12`status`C`           Push all changes"
-  echo
-  [[ $DOTFILES_OPT_DEBUG == true ]] && _debug
-  exit
+    echo "`C 10`$0 `C` [-iyf] [--force-setup] <action> <repo>"
+    echo
+    echo "  `C 3`Options:`C`"
+    echo "    `C 12`-i --interactive`C` interactive"
+    echo "    `C 12`-y --noask`C`       assume defaults (i.e. don't ask)"
+    echo "    `C 12`-f --force-setup`C` Setup symlinks for the repo no matter what"
+    echo "    `C 12`-d --debug`C`       Debug output"
+    echo "    `C 12`--fetch`C`          Fetch changes"
+    echo "    `C 12`-r --recursive`C`   Check for git repos recursively"
+    echo
+    echo "  `C 3`Actions:`C`"
+    echo "    `C 12`setup`C`            Setup repositories"
+    echo "    `C 12`debug`C`            This help screen "
+    echo "    `C 12`help`C`             This help screen "
+    echo "    `C 12`list-backups`C`     Remove all timestamped backups"
+    echo "    `C 12`rm-backups`C`       Remove all timestamped backups"
+    echo "    `C 12`pull-all`C`         Pull all changes"
+    echo "    `C 12`push-all`C`         Push all changes"
+    echo "    `C 12`status`C`           Push all changes"
+    echo
+    if [[ $DOTFILES_OPT_DEBUG == true ]];then 
+        echo "  `C 3`Repos:`C` [Default: all of them]"
+        for repo in "${LIST_OF_REPOS[@]}";do
+            echo -e "    `C 12`$repo`C`\t     $DOTFILES_REPO_PREFIX$repo$DOTFILES_REPO_SUFFIX"
+        done|column;
+        echo
+        echo "  `C 3`Variables:`C`"
+        _debug|sed 's/^/    /'
+    fi
+    exit
 }
 #}}}
 
