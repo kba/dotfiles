@@ -1,4 +1,5 @@
 #!/bin/bash
+# vim: fmr={{{,}}}
 
 #{{{
 _log() { echo -ne "$(C 4)$1$(C) "; shift; echo -e "$*"; }
@@ -8,7 +9,7 @@ _warn() { echo "$(C 3)WARN$(C) $*"; }
 _indent() { local indent=${1:-    }; local line; while read line;do echo -e "${indent}$line";done; }
 _remove_path_tail_filter() { sed 's,/[^/]*/\?$,,g'; }
 _remove_path_head() { for p in "$@";do echo -n "${p##*/} ";done; }
-#}}} 
+#}}}
 #{{{
 _ask_yes_no() {
     default_to_yes=$2
@@ -144,7 +145,7 @@ action_setup() {
     done
 }
 #}}}
-#{{{
+#{{{ 
 action_push() {
     local repos=($(_gitdirs "${LIST_OF_REPOS[@]}"))
     # shellcheck disable=SC2001 disable=SC2046
@@ -256,6 +257,28 @@ action_usage() {
         _debug|_indent
     fi
     exit
+}
+#}}}
+#{{{
+action_archive() {
+    local dotignore=$(mktemp "/tmp/dotfiles-XXXXX.dotignore")
+    local dotfiles_tar=$(mktemp "/tmp/dotfiles-XXXXX.tar.gz")
+    local dotfiles_basename=${DOTFILEDIR##*/}
+    echo > "$dotignore"
+    local repos=($(_gitdirs "${LIST_OF_REPOS[@]}"))
+    for repo in "${repos[@]}";do
+        if [[ -e "$repo/.dotignore" ]];then
+            sed -e '/^\s*$/ d' -e "s,^.*,$dotfiles_basename/repo/${repo##*/}/\\0," \
+                < "$repo/.dotignore" \
+                >> "$dotignore"
+        fi
+    done
+    cd "$DOTFILEDIR/.."
+    _log "git archive ignore" "$(_indent < "$dotignore")"
+    _log "git archive" "Creating: $dotfiles_tar"
+    tar cjf "$dotfiles_tar" -X "$dotignore" "$dotfiles_basename"
+    _log "git archive" "Created"
+    rm "$dotignore"
 }
 #}}}
 
