@@ -118,7 +118,7 @@ _setup_repo() {
                     backup="$backup_tstamp/$dotfile"
                     mkdir -p "$backup_tstamp"
                     _log "BACKUP" "$(C 1)$targetdir/$dotfile$(C) -> $backup"
-                    mv -v "$targetdir/$dotfile" "$backup"
+                    mv -vf "$targetdir/$dotfile" "$backup"
                     _log "SYMLINK" "$repo/$confdir/$dotfile -> $(C 2)$targetdir/$dotfile$(C)"
                     ln -fs "$(readlink -f "$confdir/$dotfile")" "$targetdir/$dotfile"
                 done
