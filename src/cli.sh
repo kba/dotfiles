@@ -138,156 +138,20 @@ _setup_repo() {
 #}}}
 
 #{{{ BEGIN-INCLUDE ./src/action/setup.bash
-action_setup() {
-    _log "Setting up" "${LIST_OF_REPOS[*]}"
-    for repo in "${LIST_OF_REPOS[@]}";do
-        _setup_repo "$repo"
-    done
-}
-
 #}}} END-INCLUDE
 #{{{ BEGIN-INCLUDE ./src/action/push.bash
-action_push() {
-    local repos=($(_gitdirs "${LIST_OF_REPOS[@]}"))
-    # shellcheck disable=SC2001 disable=SC2046
-    _log "Pulling repos" $(_remove_path_head "${repos[@]}")
-    for repo in "${repos[@]}";do
-        cd $repo
-        _log "git push" "Pushing $repo"
-        if git diff-index --quiet --cached HEAD --;then
-            git push 2>&1|_indent
-        elif [[ "$DOTFILES_OPT_INTERACTIVE" == true ]];then
-            git add .
-            git commit -v && git push|_indent
-        else
-            _warn "Untracked files not add/commit/push unless --interactive"
-        fi
-    done
-}
-
 #}}} END-INCLUDE
 #{{{ BEGIN-INCLUDE ./src/action/pull.bash
-action_pull() {
-    local repos=($(_gitdirs "${LIST_OF_REPOS[@]}"))
-    # shellcheck disable=SC2001 disable=SC2046
-    _log "Pulling repos" $(_remove_path_head "${repos[@]}")
-    for repo in "${repos[@]}";do
-        cd $repo
-        _log "git pull" "$repo"
-        git pull -q --stat origin master 2>&1|_indent
-    done
-}
-
 #}}} END-INCLUDE
 #{{{ BEGIN-INCLUDE ./src/action/list_backups.bash
-action_list_backups() {
-    for backup_tstamp in $DOTFILES_BACKUPDIR/*;do
-        _log "$backup_tstamp"
-        for backup in $backup_tstamp/.*;do
-            if [[ -L $backup ]];then
-                _log "    " "$(basename "$backup")"
-            fi
-        done
-    done
-}
-
 #}}} END-INCLUDE
 #{{{ BEGIN-INCLUDE ./src/action/rm_backups.bash
-action_rm_backups() {
-    for backup_tstamp in $DOTFILES_BACKUPDIR/*;do
-        _log "`C 2 b`$backup_tstamp"
-        for backup in $backup_tstamp/.*;do
-            local do_remove=false
-            if [[ ! -L $backup ]];then
-                _warn "Not removing, not a symbolic link: '$backup'"
-                continue
-            fi
-            if [[ $DOTFILES_OPT_NOASK == true ]];then
-                do_remove=true
-            elif [[ $DOTFILES_OPT_INTERACTIVE == true ]];then
-                _ask_yes_no "Remove backup?" && do_remove=true
-            fi
-            if [[ "$do_remove" == true ]];then
-                _warn "DELETE '$backup'"
-                rm "$backup"
-            fi
-        done
-        if [[ -n "$(ls -A "$backup_tstamp")" ]];then
-            rmdir "$backup_tstamp";
-        fi
-    done
-}
-
 #}}} END-INCLUDE
 #{{{ BEGIN-INCLUDE ./src/action/status.bash
-action_status() {
-    local repos=($(_gitdirs "${LIST_OF_REPOS[@]}"))
-    # shellcheck disable=SC2001 disable=SC2046
-    _log "Status'ing repos" $(_remove_path_head "${repos[@]}")
-    for repo in "${repos[@]}";do
-        cd "$repo"
-        _log "git status" "$repo"
-        [[ $DOTFILES_OPT_FETCH == true ]] && git fetch >/dev/null 2>&1
-        git status -s|_indent
-    done
-}
-
 #}}} END-INCLUDE
 #{{{ BEGIN-INCLUDE ./src/action/usage.bash
-action_usage() {
-    echo "`C 10`$0 `C` [options] <action> [repo...]"
-    echo
-    echo "  `C 3`Options:`C`"
-    echo "    `C 12`-f --force`C`       Setup symlinks for the repo no matter what"
-    echo "    `C 12`-a --all`C`         Run command on all existing repos"
-    echo "    `C 12`-i --interactive`C` Ask for confirmation"
-    echo "    `C 12`-y --noask`C`       Assume defaults (i.e. don't ask but assume yes)"
-    echo "    `C 12`-F --fetch`C`       Fetch changes"
-    echo "    `C 12`-r --recursive`C`   Check for git repos recursively"
-    echo "    `C 12`-d --debug`C`       Show Debug output"
-    echo
-    echo "  `C 3`Actions:`C`"
-    echo "    `C 12`setup`C`        Setup repositories"
-    echo "    `C 12`list-backups`C` Remove all timestamped backups"
-    echo "    `C 12`rm-backups`C`   Remove all timestamped backups"
-    echo "    `C 12`pull`C`         git pull for each repo"
-    echo "    `C 12`push`C`         git push for each repo"
-    echo "    `C 12`status`C`       git status for each repos"
-    echo
-    if [[ $DOTFILES_OPT_DEBUG == true ]];then 
-        echo "  `C 3`Repos:`C` [Default: all of them]"
-        for repo in "${LIST_OF_REPOS[@]}";do
-            echo -e "    `C 12`$repo`C`\t     $DOTFILES_REPO_PREFIX$repo$DOTFILES_REPO_SUFFIX"
-        done;
-        echo -e "\n  `C 3`Variables:`C`"
-        _debug|_indent
-    fi
-    exit
-}
-
 #}}} END-INCLUDE
 #{{{ BEGIN-INCLUDE ./src/action/archive.bash
-action_archive() {
-    local dotignore=$(mktemp "/tmp/dotfiles-XXXXX.dotignore")
-    local dotfiles_tar=$(mktemp "/tmp/dotfiles-XXXXX.tar.gz")
-    local dotfiles_basename=${DOTFILEDIR##*/}
-    echo > "$dotignore"
-    local repos=($(_gitdirs "${LIST_OF_REPOS[@]}"))
-    for repo in "${repos[@]}";do
-        if [[ -e "$repo/.dotignore" ]];then
-            sed -e '/^\s*$/ d' -e "s,^.*,$dotfiles_basename/repo/${repo##*/}/\\0," \
-                < "$repo/.dotignore" \
-                >> "$dotignore"
-        fi
-    done
-    cd "$DOTFILEDIR/.."
-    _log "git archive ignore" "$(_indent < "$dotignore")"
-    _log "git archive" "Creating: $dotfiles_tar"
-    tar cjf "$dotfiles_tar" -X "$dotignore" "$dotfiles_basename"
-    _log "git archive" "Created"
-    rm "$dotignore"
-}
-
 #}}} END-INCLUDE
 
 # {{{
