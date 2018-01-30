@@ -1,4 +1,7 @@
-action_push() {
+subcommand::push::description() {
+    echo "Push all repos"
+}
+subcommand::push() {
     local repos=($(_gitdirs "${LIST_OF_REPOS[@]}"))
     # shellcheck disable=SC2001 disable=SC2046
     _log "Pulling repos" $(_remove_path_head "${repos[@]}")

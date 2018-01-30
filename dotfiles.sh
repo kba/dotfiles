@@ -1,7 +1,7 @@
 #!/bin/bash
 # vim: fmr={{{,}}}
 
-#{{{
+#{{{ BEGIN-INCLUDE ./src/util.bash
 _log() { echo -ne "$(C 4)$1$(C) "; shift; echo -e "$*"; }
 _logn() { echo -ne "$(C 4)$1$(C) "; shift; echo -ne "$*"; }
 _error() { _log "$(C 1 b)ERROR" "$*"; }
@@ -9,8 +9,8 @@ _warn() { echo "$(C 3)WARN$(C) $*"; }
 _indent() { local indent=${1:-    }; local line; while read line;do echo -e "${indent}$line";done; }
 _remove_path_tail_filter() { sed 's,/[^/]*/\?$,,g'; }
 _remove_path_head() { for p in "$@";do echo -n "${p##*/} ";done; }
-#}}}
-#{{{
+
+#{{{ _ask_yes_no
 _ask_yes_no() {
     default_to_yes=$2
     if [[ ! -z $default_to_yes && "$default_to_yes" == "yes" ]];then
@@ -31,7 +31,7 @@ _ask_yes_no() {
 }
 export -f _ask_yes_no
 #}}}
-#{{{
+#{{{ _debug
 _debug() {
     (   env | grep '^DOTFILES'|sort
         echo "LIST_OF_REPOS=${LIST_OF_REPOS[*]}"
@@ -44,7 +44,7 @@ _debug() {
     done|column -s= -t
 }
 #}}}
-#{{{
+#{{{ _gitdirs
 _gitdirs() {
     if [[ "$DOTFILES_OPT_ALL" == true ]];then
         if [[ $DOTFILES_OPT_RECURSIVE == true ]];then
@@ -59,9 +59,54 @@ _gitdirs() {
     fi
 }
 #}}}
-#{{{
+
+#}}} END-INCLUDE
+#{{{ BEGIN-INCLUDE ./src/subcommand/select.bash
+subcommand::select::description() {
+    echo "Interactively select repos"
+}
+
+subcommand::select() {
+    cd "$DOTFILEDIR"
+    local repos=($(cat REPOLIST.*|sort|uniq))
+    if [[ -e REPOLIST ]];then
+        echo "`C 1`WARNING`C` This will clobber your existing REPOLIST. Press Ctrl-C to cancel"
+        read
+    fi
+    echo > REPOLIST
+    for repo in ${repos[@]};do
+        echo -n "[ ] $repo"
+        read -n1 -p " [yN] > "  yesno;
+        if [[ "$yesno" != "y" && "$yesno" != "n" ]];then
+            yesno="y"
+        fi
+        if [[ "$yesno" = "y" ]];then
+            echo -e "\r[x]"
+        else
+            echo -e "\r[ ]"
+            echo -n "# " >> REPOLIST
+        fi
+        echo "$repo" >> REPOLIST
+    done
+    echo "Written to $DOTFILEDIR/REPOLIST"
+}
+
+#}}} END-INCLUDE
+#{{{ BEGIN-INCLUDE ./src/subcommand/setup.bash
+subcommand::setup::description() {
+    echo Setup repositories
+}
+
+subcommand::setup() {
+    _log "Setting up" "${LIST_OF_REPOS[*]}"
+    for repo in "${LIST_OF_REPOS[@]}";do
+        _setup_repo "$repo"
+    done
+}
+
 _setup_repo() {
     repo=$1
+    local repo_url="$DOTFILES_REPO_PREFIX${repo}$DOTFILES_REPO_SUFFIX"
     _log "SETUP" "Setting up '$repo'"
     cd "$DOTFILES_REPODIR"
 
@@ -70,14 +115,14 @@ _setup_repo() {
 
     # Try to clone
     if [[ ! -e $repo ]];then
-        git clone --depth 5 "$DOTFILES_REPO_PREFIX${repo}$DOTFILES_REPO_SUFFIX"
+        git clone --depth 5 "$repo_url"
         if [[ ! -e $repo ]];then
-            _error "Could not pull $DOTFILES_REPO_PREFIX${repo}$DOTFILES_REPO_SUFFIX"
-            exit 1
+            _error "Could not pull $repo_url"
+            return 1
         fi
         cloned=true
     else
-        # If alreayd exists, check whether to pull
+        # If already exists, check whether to pull
         _warn "Repository '$repo' already exists"
         if [[ $DOTFILES_OPT_FORCE == true || $DOTFILES_OPT_NOASK == true ]];then
             should_pull=true
@@ -135,19 +180,13 @@ _setup_repo() {
 
     cd "$DOTFILEDIR"
 }
-#}}}
-
-#{{{ BEGIN-INCLUDE ./src/action/setup.bash
-action_setup() {
-    _log "Setting up" "${LIST_OF_REPOS[*]}"
-    for repo in "${LIST_OF_REPOS[@]}";do
-        _setup_repo "$repo"
-    done
-}
 
 #}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/action/push.bash
-action_push() {
+#{{{ BEGIN-INCLUDE ./src/subcommand/push.bash
+subcommand::push::description() {
+    echo "Push all repos"
+}
+subcommand::push() {
     local repos=($(_gitdirs "${LIST_OF_REPOS[@]}"))
     # shellcheck disable=SC2001 disable=SC2046
     _log "Pulling repos" $(_remove_path_head "${repos[@]}")
@@ -166,8 +205,12 @@ action_push() {
 }
 
 #}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/action/pull.bash
-action_pull() {
+#{{{ BEGIN-INCLUDE ./src/subcommand/pull.bash
+subcommand::pull::description() {
+    echo "Pull all repos"
+}
+
+subcommand::pull() {
     local repos=($(_gitdirs "${LIST_OF_REPOS[@]}"))
     # shellcheck disable=SC2001 disable=SC2046
     _log "Pulling repos" $(_remove_path_head "${repos[@]}")
@@ -179,8 +222,16 @@ action_pull() {
 }
 
 #}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/action/list_backups.bash
-action_list_backups() {
+#{{{ BEGIN-INCLUDE ./src/subcommand/bak-rm.bash
+
+
+#}}} END-INCLUDE
+#{{{ BEGIN-INCLUDE ./src/subcommand/bak-ls.bash
+subcommand::bak-ls::description() {
+    echo "List all timestamped backups"
+}
+
+subcommand::bak-ls() {
     for backup_tstamp in $DOTFILES_BACKUPDIR/*;do
         _log "$backup_tstamp"
         for backup in $backup_tstamp/.*;do
@@ -192,35 +243,11 @@ action_list_backups() {
 }
 
 #}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/action/rm_backups.bash
-action_rm_backups() {
-    for backup_tstamp in $DOTFILES_BACKUPDIR/*;do
-        _log "`C 2 b`$backup_tstamp"
-        for backup in $backup_tstamp/.*;do
-            local do_remove=false
-            if [[ ! -L $backup ]];then
-                _warn "Not removing, not a symbolic link: '$backup'"
-                continue
-            fi
-            if [[ $DOTFILES_OPT_NOASK == true ]];then
-                do_remove=true
-            elif [[ $DOTFILES_OPT_INTERACTIVE == true ]];then
-                _ask_yes_no "Remove backup?" && do_remove=true
-            fi
-            if [[ "$do_remove" == true ]];then
-                _warn "DELETE '$backup'"
-                rm "$backup"
-            fi
-        done
-        if [[ -n "$(ls -A "$backup_tstamp")" ]];then
-            rmdir "$backup_tstamp";
-        fi
-    done
+#{{{ BEGIN-INCLUDE ./src/subcommand/status.bash
+subcommand::status::description () {
+    echo "Repo status"
 }
-
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/action/status.bash
-action_status() {
+subcommand::status() {
     local repos=($(_gitdirs "${LIST_OF_REPOS[@]}"))
     # shellcheck disable=SC2001 disable=SC2046
     _log "Status'ing repos" $(_remove_path_head "${repos[@]}")
@@ -233,8 +260,11 @@ action_status() {
 }
 
 #}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/action/usage.bash
-action_usage() {
+#{{{ BEGIN-INCLUDE ./src/subcommand/usage.bash
+subcommand::usage::description () {
+    echo "Show usage"
+}
+subcommand::usage() {
     echo "`C 10`$0 `C` [options] <action> [repo...]"
     echo
     echo "  `C 3`Options:`C`"
@@ -245,14 +275,10 @@ action_usage() {
     echo "    `C 12`-F --fetch`C`       Fetch changes"
     echo "    `C 12`-r --recursive`C`   Check for git repos recursively"
     echo "    `C 12`-d --debug`C`       Show Debug output"
-    echo
     echo "  `C 3`Actions:`C`"
-    echo "    `C 12`setup`C`        Setup repositories"
-    echo "    `C 12`list-backups`C` Remove all timestamped backups"
-    echo "    `C 12`rm-backups`C`   Remove all timestamped backups"
-    echo "    `C 12`pull`C`         git pull for each repo"
-    echo "    `C 12`push`C`         git push for each repo"
-    echo "    `C 12`status`C`       git status for each repos"
+    for cmd in $(declare -F |sed 's/^declare -f //'|grep '^subcommand::[^:]*$');do
+        echo "`C 12`    ${cmd#*::}`C`	$($cmd::description)"
+    done
     echo
     if [[ $DOTFILES_OPT_DEBUG == true ]];then 
         echo "  `C 3`Repos:`C` [Default: all of them]"
@@ -266,8 +292,11 @@ action_usage() {
 }
 
 #}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/action/archive.bash
-action_archive() {
+#{{{ BEGIN-INCLUDE ./src/subcommand/archive.bash
+subcommand::archive::description() {
+    echo "Create an archive of current state"
+}
+subcommand::archive() {
     local dotignore=$(mktemp "/tmp/dotfiles-XXXXX.dotignore")
     local dotfiles_tar=$(mktemp "/tmp/dotfiles-XXXXX.tar.gz")
     local dotfiles_basename=${DOTFILEDIR##*/}
@@ -289,8 +318,38 @@ action_archive() {
 }
 
 #}}} END-INCLUDE
+#{{{ BEGIN-INCLUDE ./src/subcommand/find.bash
+#{{{ _find_dotfiles
+_find_dotfiles() {
+    # Only files and symlinks
+    # Only in hidden subdirectories named like an environment variable
+    # find -L repo -type f,l |grep '\.[A-Z_]\+/'
+    find -H "$DOTFILEDIR/repo" -mindepth 3|grep '/\.[A-Z_]\+' 
+}
+#}}}
+#{{{ _find_all
+_find_all() {
+    find -H "$DOTFILEDIR/repo" -mindepth 3 -type f,l | grep -v '\.git\|bundle\|cache'
+}
+#}}}
+subcommand::find::description() {
+    echo "Find all dotfiles"
+}
+subcommand::find() {
+echo "'$@'"
+    func="_find_dotfiles"
+    echo "$DOTFILES_OPT_ALL"
+    if [[ $DOTFILES_OPT_ALL = true ]];then
+        _find_all
+    else
+        _find_dotfiles
+    fi
 
-# {{{
+}
+
+#}}} END-INCLUDE
+
+#{{{ main
 main() {
 
     declare -a posargs=()
@@ -303,7 +362,7 @@ main() {
             "-d"|"--debug")       DOTFILES_OPT_DEBUG=true ;;
             "-r"|"--recursive")   DOTFILES_OPT_RECURSIVE=true ;;
             "-F"|"--fetch")       DOTFILES_OPT_FETCH=true ;;
-            -*)                   _error "Unknown Option '$1'"; action_usage; exit 1 ;;
+            -*)                   _error "Unknown Option '$1'"; subcommand::usage; exit 1 ;;
             *)                    posargs+=("$1")
         esac
         shift
@@ -313,10 +372,10 @@ main() {
     export GLOBAL_ACTION="${1:-usage}"
     shift
 
-    export ACTION_FUNC="action_${GLOBAL_ACTION//-/_}"
-    if [[ "$(type -t "$ACTION_FUNC")" != 'function' ]];then
+    export SUBCOMMAND="subcommand::${GLOBAL_ACTION}"
+    if [[ "$(type -t "$SUBCOMMAND")" != 'function' ]];then
         _error "Unknown action: $GLOBAL_ACTION"
-        action_usage
+        subcommand::usage
         exit 1
     fi
 
@@ -326,13 +385,11 @@ main() {
         LIST_OF_REPOS=("$@")
     fi
 
-    $ACTION_FUNC
+    $SUBCOMMAND
 }
 
-#
-# Configuration 
-#
-#{{{
+#}}}
+#{{{ BEGIN-INCLUDE ./src/configuration.bash
 export DOTFILEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$DOTFILEDIR"
 
@@ -342,21 +399,21 @@ source "$DOTFILEDIR/profile.default.sh"
 [[ ! -e "$DOTFILES_REPODIR"     ]] && mkdir "$DOTFILES_REPODIR"
 [[ ! -e "$DOTFILES_BACKUPDIR"   ]] && mkdir "$DOTFILES_BACKUPDIR";
 [[ -e "$DOTFILES_LOCAL_PROFILE" ]] && source "$DOTFILES_LOCAL_PROFILE"
-#}}}
 
-LIST_OF_REPOS=()
-typeset -a DEFAULT_REPOS
-# shellcheck disable=SC2013
-for include in $(grep -v '^\s*#' REPOLIST);do
-    if [[ ! -s "REPOLIST.skip" ]];then
-        DEFAULT_REPOS+=($include)
-    else
-        if ! grep -qo "^${include}$" REPOLIST.skip;then
+#}}} END-INCLUDE
+#{{{ LIST_OF_REPOS
+    LIST_OF_REPOS=()
+    typeset -a DEFAULT_REPOS
+    # shellcheck disable=SC2013
+    for include in $(grep -v '^\s*#' REPOLIST);do
+        if [[ ! -s "REPOLIST.skip" ]];then
             DEFAULT_REPOS+=($include)
+        else
+            if ! grep -qo "^${include}$" REPOLIST.skip;then
+                DEFAULT_REPOS+=($include)
+            fi
         fi
-    fi
-done
-
+    done
 #}}}
 
 now=$(date +"%Y-%m-%dT%H-%M-%SZ")

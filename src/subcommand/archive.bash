@@ -1,4 +1,7 @@
-action_archive() {
+subcommand::archive::description() {
+    echo "Create an archive of current state"
+}
+subcommand::archive() {
     local dotignore=$(mktemp "/tmp/dotfiles-XXXXX.dotignore")
     local dotfiles_tar=$(mktemp "/tmp/dotfiles-XXXXX.tar.gz")
     local dotfiles_basename=${DOTFILEDIR##*/}

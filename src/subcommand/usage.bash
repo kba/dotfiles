@@ -1,4 +1,7 @@
-action_usage() {
+subcommand::usage::description () {
+    echo "Show usage"
+}
+subcommand::usage() {
     echo "`C 10`$0 `C` [options] <action> [repo...]"
     echo
     echo "  `C 3`Options:`C`"
@@ -9,14 +12,10 @@ action_usage() {
     echo "    `C 12`-F --fetch`C`       Fetch changes"
     echo "    `C 12`-r --recursive`C`   Check for git repos recursively"
     echo "    `C 12`-d --debug`C`       Show Debug output"
-    echo
     echo "  `C 3`Actions:`C`"
-    echo "    `C 12`setup`C`        Setup repositories"
-    echo "    `C 12`list-backups`C` Remove all timestamped backups"
-    echo "    `C 12`rm-backups`C`   Remove all timestamped backups"
-    echo "    `C 12`pull`C`         git pull for each repo"
-    echo "    `C 12`push`C`         git push for each repo"
-    echo "    `C 12`status`C`       git status for each repos"
+    for cmd in $(declare -F |sed 's/^declare -f //'|grep '^subcommand::[^:]*$');do
+        echo "`C 12`    ${cmd#*::}`C`	$($cmd::description)"
+    done
     echo
     if [[ $DOTFILES_OPT_DEBUG == true ]];then 
         echo "  `C 3`Repos:`C` [Default: all of them]"

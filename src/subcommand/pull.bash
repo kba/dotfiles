@@ -1,4 +1,8 @@
-action_pull() {
+subcommand::pull::description() {
+    echo "Pull all repos"
+}
+
+subcommand::pull() {
     local repos=($(_gitdirs "${LIST_OF_REPOS[@]}"))
     # shellcheck disable=SC2001 disable=SC2046
     _log "Pulling repos" $(_remove_path_head "${repos[@]}")

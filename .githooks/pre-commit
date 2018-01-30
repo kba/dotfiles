@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# An example hook script to verify what is about to be committed.
+# Called by "git commit" with no arguments.  The hook should
+# exit with non-zero status after issuing an appropriate message if
+# it wants to stop the commit.
+#
+# To enable this hook, rename this file to "pre-commit".
+
+before=$(md5sum ./dotfiles.sh)
+make -B
+after=$(md5sum ./dotfiles.sh)
+echo "before=$before after=$after"
+if [ "$before" != "$after" ];then
+    echo "./dotfiles.sh is not up-to-date"
+    exit 1
+fi

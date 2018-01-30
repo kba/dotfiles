@@ -1,4 +1,8 @@
-action_rm_backups() {
+subcommand::bak-rm::description () {
+    echo "Remove all timestamped backups"
+}
+
+subcommand::bak-rm() {
     for backup_tstamp in $DOTFILES_BACKUPDIR/*;do
         _log "`C 2 b`$backup_tstamp"
         for backup in $backup_tstamp/.*;do

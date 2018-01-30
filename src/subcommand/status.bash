@@ -1,4 +1,7 @@
-action_status() {
+subcommand::status::description () {
+    echo "Repo status"
+}
+subcommand::status() {
     local repos=($(_gitdirs "${LIST_OF_REPOS[@]}"))
     # shellcheck disable=SC2001 disable=SC2046
     _log "Status'ing repos" $(_remove_path_head "${repos[@]}")
