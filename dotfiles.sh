@@ -10,6 +10,26 @@ _indent() { local indent=${1:-    }; local line; while read line;do echo -e "${i
 _remove_path_tail_filter() { sed 's,/[^/]*/\?$,,g'; }
 _remove_path_head() { for p in "$@";do echo -n "${p##*/} ";done; }
 
+#{{{ util::ensure-repo-list
+util::ensure-repo-list () {
+    if [[ ! -e REPOLIST || -z REPOLIST ]];then
+        subcommand::select
+    fi
+    _log 'REPOS' 'Reading LIST_OF_REPOS from REPOLIST'
+
+    LIST_OF_REPOS=()
+    # shellcheck disable=SC2013
+    for include in $(grep -v '^\s*#' REPOLIST);do
+        if [[ ! -s "REPOLIST.skip" ]];then
+            LIST_OF_REPOS+=($include)
+        else
+            if ! grep -qo "^${include}$" REPOLIST.skip;then
+                LIST_OF_REPOS+=($include)
+            fi
+        fi
+    done
+}
+#}}}
 #{{{ _ask_yes_no
 _ask_yes_no() {
     default_to_yes=$2
@@ -95,6 +115,10 @@ subcommand::select() {
 #{{{ BEGIN-INCLUDE ./src/subcommand/setup.bash
 subcommand::setup::description() {
     echo Setup repositories
+}
+
+subcommand::setup::options () {
+    echo "-fyi"
 }
 
 subcommand::setup() {
@@ -186,10 +210,15 @@ _setup_repo() {
 subcommand::push::description() {
     echo "Push all repos"
 }
+subcommand::push::options () {
+    echo "-ri"
+}
 subcommand::push() {
+    util::ensure-repo-list
+
     local repos=($(_gitdirs "${LIST_OF_REPOS[@]}"))
     # shellcheck disable=SC2001 disable=SC2046
-    _log "Pulling repos" $(_remove_path_head "${repos[@]}")
+    _log "Pushing repos" $(_remove_path_head "${repos[@]}")
     for repo in "${repos[@]}";do
         cd $repo
         _log "git push" "Pushing $repo"
@@ -210,7 +239,12 @@ subcommand::pull::description() {
     echo "Pull all repos"
 }
 
+subcommand::pull::options () {
+    echo "-r"
+}
+
 subcommand::pull() {
+    util::ensure-repo-list
     local repos=($(_gitdirs "${LIST_OF_REPOS[@]}"))
     # shellcheck disable=SC2001 disable=SC2046
     _log "Pulling repos" $(_remove_path_head "${repos[@]}")
@@ -223,7 +257,38 @@ subcommand::pull() {
 
 #}}} END-INCLUDE
 #{{{ BEGIN-INCLUDE ./src/subcommand/bak-rm.bash
+subcommand::bak-rm::description () {
+    echo "Remove all timestamped backups"
+}
 
+subcommand::bak-rm::options () {
+    echo "-yi"
+}
+
+subcommand::bak-rm() {
+    for backup_tstamp in $DOTFILES_BACKUPDIR/*;do
+        _log "`C 2 b`$backup_tstamp"
+        for backup in $backup_tstamp/.*;do
+            local do_remove=false
+            if [[ ! -L $backup ]];then
+                _warn "Not removing, not a symbolic link: '$backup'"
+                continue
+            fi
+            if [[ $DOTFILES_OPT_NOASK == true ]];then
+                do_remove=true
+            elif [[ $DOTFILES_OPT_INTERACTIVE == true ]];then
+                _ask_yes_no "Remove backup?" && do_remove=true
+            fi
+            if [[ "$do_remove" == true ]];then
+                _warn "DELETE '$backup'"
+                rm "$backup"
+            fi
+        done
+        if [[ -n "$(ls -A "$backup_tstamp")" ]];then
+            rmdir "$backup_tstamp";
+        fi
+    done
+}
 
 #}}} END-INCLUDE
 #{{{ BEGIN-INCLUDE ./src/subcommand/bak-ls.bash
@@ -247,15 +312,26 @@ subcommand::bak-ls() {
 subcommand::status::description () {
     echo "Repo status"
 }
+subcommand::status::options () {
+    echo "-Fr"
+}
+
 subcommand::status() {
+    util::ensure-repo-list
     local repos=($(_gitdirs "${LIST_OF_REPOS[@]}"))
     # shellcheck disable=SC2001 disable=SC2046
     _log "Status'ing repos" $(_remove_path_head "${repos[@]}")
     for repo in "${repos[@]}";do
         cd "$repo"
-        _log "git status" "$repo"
+        _logn "git status" "$repo"
         [[ $DOTFILES_OPT_FETCH == true ]] && git fetch >/dev/null 2>&1
-        git status -s|_indent
+        status="$(git status -s|_indent)"
+        if [[ -z "$status" ]];then
+            echo -e "\r`C 2`unchanged "
+        else
+            echo -e "\r`C 1`changed    `C`"
+            echo "$status"
+        fi
     done
 }
 
@@ -264,6 +340,11 @@ subcommand::status() {
 subcommand::usage::description () {
     echo "Show usage"
 }
+
+subcommand::usage::options () {
+    echo "-d"
+}
+
 subcommand::usage() {
     echo "`C 10`$0 `C` [options] <action> [repo...]"
     echo
@@ -275,9 +356,11 @@ subcommand::usage() {
     echo "    `C 12`-F --fetch`C`       Fetch changes"
     echo "    `C 12`-r --recursive`C`   Check for git repos recursively"
     echo "    `C 12`-d --debug`C`       Show Debug output"
+    echo
     echo "  `C 3`Actions:`C`"
     for cmd in $(declare -F |sed 's/^declare -f //'|grep '^subcommand::[^:]*$');do
-        echo "`C 12`    ${cmd#*::}`C`	$($cmd::description)"
+        options=$($cmd::options 2>/dev/null)
+        echo "`C 12`    ${cmd#*::}`C` $options	$($cmd::description)"
     done
     echo
     if [[ $DOTFILES_OPT_DEBUG == true ]];then 
@@ -296,7 +379,11 @@ subcommand::usage() {
 subcommand::archive::description() {
     echo "Create an archive of current state"
 }
-subcommand::archive() {
+subcommand::archive::options () {
+    echo "-r"
+}
+
+subcommand::archive () {
     local dotignore=$(mktemp "/tmp/dotfiles-XXXXX.dotignore")
     local dotfiles_tar=$(mktemp "/tmp/dotfiles-XXXXX.tar.gz")
     local dotfiles_basename=${DOTFILEDIR##*/}
@@ -335,6 +422,11 @@ _find_all() {
 subcommand::find::description() {
     echo "Find all dotfiles"
 }
+
+subcommand::find::options () {
+    echo "-a"
+}
+
 subcommand::find() {
 echo "'$@'"
     func="_find_dotfiles"
@@ -379,9 +471,7 @@ main() {
         exit 1
     fi
 
-    if [[ $# == 0 ]];then
-        LIST_OF_REPOS=("${DEFAULT_REPOS[@]}")
-    else
+    if (( $# > 0 ));then
         LIST_OF_REPOS=("$@")
     fi
 
@@ -401,20 +491,6 @@ source "$DOTFILEDIR/profile.default.sh"
 [[ -e "$DOTFILES_LOCAL_PROFILE" ]] && source "$DOTFILES_LOCAL_PROFILE"
 
 #}}} END-INCLUDE
-#{{{ LIST_OF_REPOS
-    LIST_OF_REPOS=()
-    typeset -a DEFAULT_REPOS
-    # shellcheck disable=SC2013
-    for include in $(grep -v '^\s*#' REPOLIST);do
-        if [[ ! -s "REPOLIST.skip" ]];then
-            DEFAULT_REPOS+=($include)
-        else
-            if ! grep -qo "^${include}$" REPOLIST.skip;then
-                DEFAULT_REPOS+=($include)
-            fi
-        fi
-    done
-#}}}
 
 now=$(date +"%Y-%m-%dT%H-%M-%SZ")
 main "$@"

@@ -6,6 +6,26 @@ _indent() { local indent=${1:-    }; local line; while read line;do echo -e "${i
 _remove_path_tail_filter() { sed 's,/[^/]*/\?$,,g'; }
 _remove_path_head() { for p in "$@";do echo -n "${p##*/} ";done; }
 
+#{{{ util::ensure-repo-list
+util::ensure-repo-list () {
+    if [[ ! -e REPOLIST || -z REPOLIST ]];then
+        subcommand::select
+    fi
+    _log 'REPOS' 'Reading LIST_OF_REPOS from REPOLIST'
+
+    LIST_OF_REPOS=()
+    # shellcheck disable=SC2013
+    for include in $(grep -v '^\s*#' REPOLIST);do
+        if [[ ! -s "REPOLIST.skip" ]];then
+            LIST_OF_REPOS+=($include)
+        else
+            if ! grep -qo "^${include}$" REPOLIST.skip;then
+                LIST_OF_REPOS+=($include)
+            fi
+        fi
+    done
+}
+#}}}
 #{{{ _ask_yes_no
 _ask_yes_no() {
     default_to_yes=$2

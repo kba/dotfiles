@@ -2,6 +2,10 @@ subcommand::setup::description() {
     echo Setup repositories
 }
 
+subcommand::setup::options () {
+    echo "-fyi"
+}
+
 subcommand::setup() {
     _log "Setting up" "${LIST_OF_REPOS[*]}"
     for repo in "${LIST_OF_REPOS[@]}";do

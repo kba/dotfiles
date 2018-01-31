@@ -14,6 +14,11 @@ _find_all() {
 subcommand::find::description() {
     echo "Find all dotfiles"
 }
+
+subcommand::find::options () {
+    echo "-a"
+}
+
 subcommand::find() {
 echo "'$@'"
     func="_find_dotfiles"

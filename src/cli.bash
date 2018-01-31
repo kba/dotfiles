@@ -54,9 +54,7 @@ main() {
         exit 1
     fi
 
-    if [[ $# == 0 ]];then
-        LIST_OF_REPOS=("${DEFAULT_REPOS[@]}")
-    else
+    if (( $# > 0 ));then
         LIST_OF_REPOS=("$@")
     fi
 
@@ -66,20 +64,6 @@ main() {
 #}}}
 #{{{ BEGIN-INCLUDE ./src/configuration.bash
 #}}} END-INCLUDE
-#{{{ LIST_OF_REPOS
-    LIST_OF_REPOS=()
-    typeset -a DEFAULT_REPOS
-    # shellcheck disable=SC2013
-    for include in $(grep -v '^\s*#' REPOLIST);do
-        if [[ ! -s "REPOLIST.skip" ]];then
-            DEFAULT_REPOS+=($include)
-        else
-            if ! grep -qo "^${include}$" REPOLIST.skip;then
-                DEFAULT_REPOS+=($include)
-            fi
-        fi
-    done
-#}}}
 
 now=$(date +"%Y-%m-%dT%H-%M-%SZ")
 main "$@"

@@ -1,6 +1,11 @@
 subcommand::usage::description () {
     echo "Show usage"
 }
+
+subcommand::usage::options () {
+    echo "-d"
+}
+
 subcommand::usage() {
     echo "`C 10`$0 `C` [options] <action> [repo...]"
     echo
@@ -12,9 +17,11 @@ subcommand::usage() {
     echo "    `C 12`-F --fetch`C`       Fetch changes"
     echo "    `C 12`-r --recursive`C`   Check for git repos recursively"
     echo "    `C 12`-d --debug`C`       Show Debug output"
+    echo
     echo "  `C 3`Actions:`C`"
     for cmd in $(declare -F |sed 's/^declare -f //'|grep '^subcommand::[^:]*$');do
-        echo "`C 12`    ${cmd#*::}`C`	$($cmd::description)"
+        options=$($cmd::options 2>/dev/null)
+        echo "`C 12`    ${cmd#*::}`C` $options	$($cmd::description)"
     done
     echo
     if [[ $DOTFILES_OPT_DEBUG == true ]];then 
