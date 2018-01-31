@@ -5,7 +5,7 @@
 #}}} END-INCLUDE
 #{{{ BEGIN-INCLUDE ./src/subcommand/select.bash
 #}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/setup.bash
+#{{{ BEGIN-INCLUDE ./src/subcommand/clone.bash
 #}}} END-INCLUDE
 #{{{ BEGIN-INCLUDE ./src/subcommand/push.bash
 #}}} END-INCLUDE
@@ -22,6 +22,8 @@
 #{{{ BEGIN-INCLUDE ./src/subcommand/archive.bash
 #}}} END-INCLUDE
 #{{{ BEGIN-INCLUDE ./src/subcommand/find.bash
+#}}} END-INCLUDE
+#{{{ BEGIN-INCLUDE ./src/subcommand/init.bash
 #}}} END-INCLUDE
 
 #{{{ main
@@ -55,7 +57,7 @@ main() {
     fi
 
     if (( $# > 0 ));then
-        LIST_OF_REPOS=("$@")
+        export LIST_OF_REPOS=("$@")
     fi
 
     $SUBCOMMAND

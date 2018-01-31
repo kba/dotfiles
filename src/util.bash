@@ -6,8 +6,50 @@ _indent() { local indent=${1:-    }; local line; while read line;do echo -e "${i
 _remove_path_tail_filter() { sed 's,/[^/]*/\?$,,g'; }
 _remove_path_head() { for p in "$@";do echo -n "${p##*/} ";done; }
 
+#{{{ util::symlink
+util::symlink () {
+for confdir in ".HOME" ".XDG_CONFIG_HOME";do
+    targetdir=~
+    if [[ $confdir == ".XDG_CONFIG_HOME" ]];then
+        targetdir=~/.config
+    fi
+    if [ -e $confdir ];then
+        # shellcheck disable=SC2044
+        for dotfile in $(find "$confdir" -mindepth 1 -name '*' -exec basename {} \;);do
+            _log "SYMLINK" "$repo/$confdir/$dotfile -> $(C 2)$targetdir/$dotfile$(C)"
+            ln -fs "$(readlink -f "$confdir/$dotfile")" "$targetdir/$dotfile"
+        done
+    fi
+done
+}
+#}}}
+#{{{ util::backup
+util::backup () {
+    local now=$1
+    cd "$2"
+    for confdir in ".HOME" ".XDG_CONFIG_HOME";do
+        targetdir=~
+        if [[ $confdir == ".XDG_CONFIG_HOME" ]];then
+            targetdir=~/.config
+        fi
+        backup_tstamp="$DOTFILES_BACKUPDIR/$now/$confdir"
+        if [ -e $confdir ];then
+            # shellcheck disable=SC2044
+            for dotfile in $(find "$confdir" -mindepth 1 -name '*' -exec basename {} \;);do
+                backup="$backup_tstamp/$dotfile"
+                mkdir -p "$backup_tstamp"
+                _log "BACKUP" "$(C 1)$targetdir/$dotfile$(C) -> $backup"
+                mv -f "$targetdir/$dotfile" "$backup"
+            done
+        fi
+    done
+}
+#}}}
 #{{{ util::ensure-repo-list
 util::ensure-repo-list () {
+    if [[ "$LIST_OF_REPOS" != "" ]];then
+        return
+    fi
     if [[ ! -e REPOLIST || -z REPOLIST ]];then
         subcommand::select
     fi

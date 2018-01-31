@@ -1,6 +1,7 @@
 subcommand::archive::description() {
     echo "Create an archive of current state"
 }
+
 subcommand::archive::options () {
     echo "-r"
 }
