@@ -6,3 +6,6 @@ dotfiles.sh: src/cli.bash
 
 hooks:
 	ln -s ../../.githooks/pre-commit .git/hooks
+
+lib/shcolor.sh:
+	cd $(dir $@) && wget https://raw.githubusercontent.com/kba/shcolor/master/shcolor.sh

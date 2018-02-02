@@ -1,6 +1,6 @@
 # kba's dotfiles setup
 
-![dotfile all the dotfiles](meme.png)
+![dotfile all the dotfiles](doc/meme.png)
 
 <!-- BEGIN-MARKDOWN-TOC -->
 * [Why another dotfiles framework](#why-another-dotfiles-framework)
@@ -107,7 +107,7 @@ will be set up
 
 * `$HOME/.mytoolrc -> $DOTFILEDIR/repo/some-repo/mytoolrc`
 
-### Setup scripts
+### Setup script
 
 Some tools will require additional steps beyond [setting up
 symlinks](#symlinks). These steps can be done with a shell script in the root
@@ -122,8 +122,9 @@ This script will be executed after every setup of a repository.
 
 ## CLI
 
-```
-./dotfiles.sh  [options] <action> [repo...]
+<!-- BEGIN-EVAL -w '<pre>' '</pre>' -- bash dotfiles.sh -->
+<pre>
+dotfiles.sh  [options] <action> [repo...]
 
   Options:
     -f --force       Setup symlinks for the repo no matter what
@@ -135,10 +136,17 @@ This script will be executed after every setup of a repository.
     -d --debug       Show Debug output
 
   Actions:
-    setup        Setup repositories
-    list-backups Remove all timestamped backups
-    rm-backups   Remove all timestamped backups
-    pull         git pull for each repo
-    push         git push for each repo
-    status       git status for each repos
-```
+    archive -r	Create an archive of current state
+    bak-ls 	List all timestamped backups
+    bak-rm -yi	Remove all timestamped backups
+    clone -fyi	Clone repositories
+    find -a	Find all dotfiles
+    init 	Run the init script in each repo
+    pull -r	Pull all repos
+    push -ri	Push all repos
+    select 	Interactively select repos
+    status -Fr	Repo status
+    usage -d	Show usage
+</pre>
+
+<!-- END-EVAL -->

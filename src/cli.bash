@@ -1,6 +1,8 @@
 #!/bin/bash
 # vim: fmr={{{,}}}
 
+#{{{ BEGIN-INCLUDE ./lib/shcolor.sh
+#}}} END-INCLUDE
 #{{{ BEGIN-INCLUDE ./src/util.bash
 #}}} END-INCLUDE
 #{{{ BEGIN-INCLUDE ./src/subcommand/select.bash

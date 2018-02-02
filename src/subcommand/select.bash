@@ -4,7 +4,7 @@ subcommand::select::description() {
 
 subcommand::select() {
     cd "$DOTFILEDIR"
-    local repos=($(cat REPOLIST.*|sort|uniq))
+    local repos=($(cat etc/REPOLIST.*))
     if [[ -e REPOLIST ]];then
         echo "`C 1`WARNING`C` This will clobber your existing REPOLIST. Press Ctrl-C to cancel"
         read
