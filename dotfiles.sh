@@ -1,7 +1,7 @@
 #!/bin/bash
 # vim: fmr={{{,}}}
 
-#{{{ BEGIN-INCLUDE ./lib/shcolor.sh
+# BEGIN-INCLUDE ./lib/shcolor.sh
 test -t 1 || COLORS_ENABLED=false
 __ESC_SEQ="\x1b["
 __cReset="${__ESC_SEQ}39;49m"
@@ -86,8 +86,8 @@ Cecho() {
     echo "`C $fmt`$msg`C`"
 }
 
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/util.bash
+# END-INCLUDE
+# BEGIN-INCLUDE ./src/util.bash
 _log() { echo -ne "$(C 4)$1$(C) "; shift; echo -e "$*"; }
 _logn() { echo -ne "$(C 4)$1$(C) "; shift; echo -ne "$*"; }
 _error() { _log "$(C 1 b)ERROR" "$*"; }
@@ -208,8 +208,8 @@ _gitdirs() {
 }
 #}}}
 
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/select.bash
+# END-INCLUDE
+# BEGIN-INCLUDE ./src/subcommand/select.bash
 subcommand::select::description() {
     echo "Interactively select repos"
 }
@@ -239,8 +239,8 @@ subcommand::select() {
     echo "Written to $DOTFILEDIR/REPOLIST"
 }
 
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/clone.bash
+# END-INCLUDE
+# BEGIN-INCLUDE ./src/subcommand/clone.bash
 subcommand::clone::description() {
     echo Clone repositories
 }
@@ -300,8 +300,8 @@ _clone_repo() {
     cd "$DOTFILEDIR"
 }
 
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/push.bash
+# END-INCLUDE
+# BEGIN-INCLUDE ./src/subcommand/push.bash
 subcommand::push::description() {
     echo "Push all repos"
 }
@@ -328,8 +328,8 @@ subcommand::push() {
     done
 }
 
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/pull.bash
+# END-INCLUDE
+# BEGIN-INCLUDE ./src/subcommand/pull.bash
 subcommand::pull::description() {
     echo "Pull all repos"
 }
@@ -350,8 +350,8 @@ subcommand::pull() {
     done
 }
 
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/bak-rm.bash
+# END-INCLUDE
+# BEGIN-INCLUDE ./src/subcommand/bak-rm.bash
 subcommand::bak-rm::description () {
     echo "Remove all timestamped backups"
 }
@@ -385,8 +385,8 @@ subcommand::bak-rm() {
     done
 }
 
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/bak-ls.bash
+# END-INCLUDE
+# BEGIN-INCLUDE ./src/subcommand/bak-ls.bash
 subcommand::bak-ls::description() {
     echo "List all timestamped backups"
 }
@@ -402,8 +402,8 @@ subcommand::bak-ls() {
     done
 }
 
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/status.bash
+# END-INCLUDE
+# BEGIN-INCLUDE ./src/subcommand/status.bash
 subcommand::status::description () {
     echo "Repo status"
 }
@@ -430,8 +430,8 @@ subcommand::status() {
     done
 }
 
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/usage.bash
+# END-INCLUDE
+# BEGIN-INCLUDE ./src/subcommand/usage.bash
 subcommand::usage::description () {
     echo "Show usage"
 }
@@ -469,8 +469,8 @@ subcommand::usage() {
     exit
 }
 
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/archive.bash
+# END-INCLUDE
+# BEGIN-INCLUDE ./src/subcommand/archive.bash
 subcommand::archive::description() {
     echo "Create an archive of current state"
 }
@@ -500,8 +500,8 @@ subcommand::archive () {
     rm "$dotignore"
 }
 
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/find.bash
+# END-INCLUDE
+# BEGIN-INCLUDE ./src/subcommand/find.bash
 #{{{ _find_dotfiles
 _find_dotfiles() {
     # Only files and symlinks
@@ -535,8 +535,8 @@ echo "'$@'"
 
 }
 
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/init.bash
+# END-INCLUDE
+# BEGIN-INCLUDE ./src/subcommand/init.bash
 subcommand::init::description () {
     echo "Run the init script in each repo"
 }
@@ -563,7 +563,7 @@ subcommand::init () {
     local do_setup=false
 }
 
-#}}} END-INCLUDE
+# END-INCLUDE
 
 #{{{ main
 main() {
@@ -603,7 +603,7 @@ main() {
 }
 
 #}}}
-#{{{ BEGIN-INCLUDE ./src/configuration.bash
+# BEGIN-INCLUDE ./src/configuration.bash
 export DOTFILEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$DOTFILEDIR"
 
@@ -613,7 +613,7 @@ source "$DOTFILEDIR/etc/profile.default.sh"
 [[ ! -e "$DOTFILES_BACKUPDIR"   ]] && mkdir "$DOTFILES_BACKUPDIR";
 [[ -e "$DOTFILES_LOCAL_PROFILE" ]] && source "$DOTFILES_LOCAL_PROFILE"
 
-#}}} END-INCLUDE
+# END-INCLUDE
 
 now=$(date +"%Y-%m-%dT%H-%M-%SZ")
 main "$@"

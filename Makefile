@@ -1,7 +1,7 @@
 dotfiles.sh: src/cli.bash
 	cat $< > $@
 	SHLOG_TERM=info \
-			   shinclude  -c vimfold  -i $@
+			   shinclude  -c pound  -i $@
 	chmod a+x $@
 
 hooks:

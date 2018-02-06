@@ -1,32 +1,19 @@
 #!/bin/bash
 # vim: fmr={{{,}}}
 
-#{{{ BEGIN-INCLUDE ./lib/shcolor.sh
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/util.bash
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/select.bash
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/clone.bash
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/push.bash
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/pull.bash
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/bak-rm.bash
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/bak-ls.bash
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/status.bash
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/usage.bash
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/archive.bash
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/find.bash
-#}}} END-INCLUDE
-#{{{ BEGIN-INCLUDE ./src/subcommand/init.bash
-#}}} END-INCLUDE
+# HERE-INCLUDE ./lib/shcolor.sh
+# HERE-INCLUDE ./src/util.bash
+# HERE-INCLUDE ./src/subcommand/select.bash
+# HERE-INCLUDE ./src/subcommand/clone.bash
+# HERE-INCLUDE ./src/subcommand/push.bash
+# HERE-INCLUDE ./src/subcommand/pull.bash
+# HERE-INCLUDE ./src/subcommand/bak-rm.bash
+# HERE-INCLUDE ./src/subcommand/bak-ls.bash
+# HERE-INCLUDE ./src/subcommand/status.bash
+# HERE-INCLUDE ./src/subcommand/usage.bash
+# HERE-INCLUDE ./src/subcommand/archive.bash
+# HERE-INCLUDE ./src/subcommand/find.bash
+# HERE-INCLUDE ./src/subcommand/init.bash
 
 #{{{ main
 main() {
@@ -66,8 +53,7 @@ main() {
 }
 
 #}}}
-#{{{ BEGIN-INCLUDE ./src/configuration.bash
-#}}} END-INCLUDE
+# HERE-INCLUDE ./src/configuration.bash
 
 now=$(date +"%Y-%m-%dT%H-%M-%SZ")
 main "$@"
