@@ -4,9 +4,9 @@ __cReset="${__ESC_SEQ}39;49m"
 __cBold=";1"
 __cItalic=";3"
 __cUnderline=";4"
-__cStopBold="${__ESC_SEQ}24m"
-__cStopItalic="${__ESC_SEQ}21m"
-__cStopUnderline="${__ESC_SEQ}21m"
+__cStopBold="${__ESC_SEQ}21m"
+__cStopItalic="${__ESC_SEQ}23m"
+__cStopUnderline="${__ESC_SEQ}24m"
 __cForeground="${__ESC_SEQ}3"
 __cForeground256="${__ESC_SEQ}38;5;"
 __cBackground="${__ESC_SEQ}4"
@@ -34,15 +34,15 @@ _internalC() {
     [[ "$ACTUAL_SHELL" == "bash" ]] && output="${!varname}$color"
 
     [[ "$underline" == 1 ]] && output="${output}${__cUnderline}"
-    [[ "$italic" == 1 ]] && output="${output}${__cUnderline}"
+    [[ "$italic"    == 1 ]] && output="${output}${__cItalic}"
     [[ "$bold"      == 1 ]] && output="${output}${__cBold}"
     output="${output}m"
     echo -ne "$output"
 }
 C() {
-  if [[ "$COLORS_ENABLED" == false ]];then
-    return
-  fi
+    if [[ "$COLORS_ENABLED" == false ]];then
+        return
+    fi
     local bold="0"
     local italic="0"
     local underline="0"
